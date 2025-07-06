@@ -1,57 +1,40 @@
 <template>
   <div class="game-container">
-    <div class="game-header">
-      <div class="game-header-top">
-        <h2>El Ascenso Corrupto</h2>
-        <div v-if="gameState && gameState.userInfo" class="user-info">
-          <img
-            v-if="gameState.userInfo.avatar_url"
-            :src="gameState.userInfo.avatar_url"
-            alt="User Avatar"
-            class="user-avatar"
-          />
-          <span>{{ gameState.userInfo.nickname }}</span>
-          <button @click="goToEditProfile" class="edit-profile-button">
-            Editar Perfil
-          </button>
-        </div>
+    <div v-if="gameState" class="game-info-panel">
+      <div class="level-details">
+        <h3>
+          Cargo Actual:
+          {{ gameState.levelInfo ? gameState.levelInfo.title : 'Cargando...' }}
+        </h3>
+        <img
+          v-if="gameState.levelInfo && gameState.levelInfo.character_image_url"
+          :src="getCharacterImageUrl(gameState.levelInfo.character_image_url)"
+          alt="Character Image"
+          class="character-image"
+        />
+        <p v-if="gameState.levelInfo">
+          {{ gameState.levelInfo.description_visual }}
+        </p>
       </div>
-      <div v-if="gameState" class="game-header-bottom">
-        <div class="level-details">
-          <h3>
-            Cargo Actual:
-            {{ gameState.levelInfo ? gameState.levelInfo.title : 'Cargando...' }}
-          </h3>
-          <img
-            v-if="gameState.levelInfo && gameState.levelInfo.character_image_url"
-            :src="gameState.levelInfo.character_image_url"
-            alt="Character Image"
-            class="character-image"
-          />
-          <p v-if="gameState.levelInfo">
-            {{ gameState.levelInfo.description_visual }}
-          </p>
-        </div>
-        <div class="resource-details">
-          <p>
-            Nivel: <strong>{{ gameState.level }}</strong>
-          </p>
-          <p>
-            Puntos de Corrupción (PC): <strong>{{ gameState.pc }}</strong>
-            <span v-if="gameState.nextLevelInfo">
-              / {{ gameState.nextLevelInfo.pc_required_for_ascension }}
-            </span>
-          </p>
-          <p>
-            Influencia (INF): <strong>{{ gameState.inf }}</strong>
-            <span v-if="gameState.nextLevelInfo">
-              / {{ gameState.nextLevelInfo.inf_required_for_ascension }}
-            </span>
-          </p>
-          <p>
-            Barra de Escándalo (BE): <strong>{{ gameState.be }}</strong>
-          </p>
-        </div>
+      <div class="resource-details">
+        <p>
+          Nivel: <strong>{{ gameState.level }}</strong>
+        </p>
+        <p>
+          Puntos de Corrupción (PC): <strong>{{ gameState.pc }}</strong>
+          <span v-if="gameState.nextLevelInfo">
+            / {{ gameState.nextLevelInfo.pc_required_for_ascension }}
+          </span>
+        </p>
+        <p>
+          Influencia (INF): <strong>{{ gameState.inf }}</strong>
+          <span v-if="gameState.nextLevelInfo">
+            / {{ gameState.nextLevelInfo.inf_required_for_ascension }}
+          </span>
+        </p>
+        <p>
+          Barra de Escándalo (BE): <strong>{{ gameState.be }}</strong>
+        </p>
       </div>
     </div>
 
@@ -147,8 +130,10 @@ export default {
     };
   },
   methods: {
-    goToEditProfile() {
-      this.$router.push({ name: 'EditProfile' });
+    getCharacterImageUrl(relativePath) {
+      // Asume que el backend está en http://localhost:5000
+      // y sirve imágenes estáticas desde su raíz.
+      return `http://localhost:5000${relativePath}`;
     },
     async spinRoulette() {
       if (this.corruptionTypes.length === 0) return;
@@ -232,50 +217,26 @@ export default {
 
 <style scoped>
 .game-container {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 100%; /* Ajusta al 100% del contenedor padre (GameLayout) */
+  margin: 0; /* Elimina el margen superior */
   background: #212529;
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
   color: #f3f3f3;
 }
-.game-header {
-  margin-bottom: 24px;
-}
-.game-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 100%;
-  object-fit: cover;
-}
-.edit-profile-button {
-  background: #5f25d6;
-  border: none;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
-}
-.game-header-bottom {
+
+.game-info-panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px; /* Añade un padding inferior para separar del contenido siguiente */
+  border-bottom: 1px solid #333; /* Línea divisoria sutil */
 }
 
 @media (min-width: 768px) {
-  .game-header-bottom {
+  .game-info-panel {
     flex-direction: row;
     justify-content: space-between;
     gap: 32px;

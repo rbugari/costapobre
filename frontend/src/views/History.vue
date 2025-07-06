@@ -45,16 +45,27 @@ export default {
 </script>
 
 <style scoped>
+.history-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: var(--surface-color); /* Fondo oscuro */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: var(--text-color); /* Texto claro */
+}
+
 .history-entry {
-  border: 1px solid #eee;
+  border: 1px solid #444; /* Borde oscuro */
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 8px;
   text-align: left;
+  background-color: #2c2f34; /* Fondo de entrada de historial */
 }
 
 .history-entry h3 {
-  color: #007bff;
+  color: var(--primary-color); /* Color primario para títulos */
   margin-top: 0;
 }
 
@@ -64,7 +75,7 @@ export default {
 
 .history-entry .timestamp {
   font-size: 0.8em;
-  color: #666;
+  color: #aaa; /* Color de texto más claro para timestamp */
   text-align: right;
 }
 </style>

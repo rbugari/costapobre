@@ -23,8 +23,6 @@
 
     <h3>Consejos del Mentor:</h3>
     <p>Sé astuto, planifica bien tus movimientos y no dejes cabos sueltos. ¡El éxito en Costa Pobre depende de tu ingenio corrupto!</p>
-
-    <button @click="$router.push('/game')">Volver al Juego</button>
   </div>
 </template>
 
@@ -39,16 +37,16 @@ export default {
   max-width: 800px;
   margin: 20px auto;
   padding: 20px;
-  border: 1px solid #ccc;
+  background-color: var(--surface-color); /* Fondo oscuro */
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: left;
-  background-color: #ffffff;
+  color: var(--text-color); /* Texto claro */
 }
 
 .help-container h2,
 .help-container h3 {
-  color: #007bff;
+  color: var(--primary-color); /* Color primario para títulos */
   margin-bottom: 15px;
 }
 
@@ -62,19 +60,5 @@ export default {
 .help-container ul {
   margin-left: 20px;
   margin-bottom: 20px;
-}
-
-.help-container button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.help-container button:hover {
-  background-color: #0056b3;
 }
 </style>
