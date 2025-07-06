@@ -1,6 +1,6 @@
 <template>
   <div class="help-container">
-    <h2>Cómo Jugar a "El Ascenso Corrupto"</h2>
+    <h2>Cómo Jugar a "CORRUPTIA"</h2>
     <p>¡Bienvenido, futuro líder de Costa Pobre! Tu objetivo es ascender en la jerarquía política utilizando tus habilidades de corrupción.</p>
 
     <h3>Flujo de Juego:</h3>
@@ -23,12 +23,19 @@
 
     <h3>Consejos del Mentor:</h3>
     <p>Sé astuto, planifica bien tus movimientos y no dejes cabos sueltos. ¡El éxito en Costa Pobre depende de tu ingenio corrupto!</p>
+
+    <button @click="goBackToGame" class="back-button">Volver al Juego</button>
   </div>
 </template>
 
 <script>
 export default {
   name: 'Help',
+  methods: {
+    goBackToGame() {
+      this.$router.push('/game');
+    },
+  },
 };
 </script>
 
@@ -60,5 +67,21 @@ export default {
 .help-container ul {
   margin-left: 20px;
   margin-bottom: 20px;
+}
+
+.back-button {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: var(--primary-dark-color);
 }
 </style>

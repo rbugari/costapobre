@@ -52,6 +52,7 @@
 
       <div class="form-actions">
         <button type="submit">Guardar Cambios</button>
+        <button type="button" @click="goBackToGame" class="back-button">Volver al Juego</button>
       </div>
     </form>
   </div>
@@ -149,6 +150,9 @@ export default {
         alert('Error al guardar el perfil de usuario.');
       }
     },
+    goBackToGame() {
+      this.$router.push('/game');
+    },
     logClick() {
       console.log('Input de archivo clickeado.');
     },
@@ -231,5 +235,14 @@ export default {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--primary-color);
+}
+
+.back-button {
+  background-color: #6c757d; /* Color gris para el botón de volver */
+  margin-left: 10px;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
 }
 </style>

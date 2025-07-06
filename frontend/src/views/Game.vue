@@ -18,7 +18,7 @@
       </div>
       <div class="resource-details">
         <p>
-          Nivel: <strong>{{ gameState.level }}</strong>
+          Nivel: <strong>{{ gameState.level }} / {{ gameState.maxLevel }}</strong>
         </p>
         <p>
           Puntos de Corrupción (PC): <strong>{{ gameState.pc }}</strong>
@@ -92,11 +92,12 @@
     </div>
 
     <!-- Tarjeta seleccionada para jugar -->
-    <div class="card-play-area" v-if="selectedCard">
+    <div class="card-play-area" v-if="selectedCard && gameConfig">
       <PlayCardView
         :card="selectedCard"
         @playCard="handlePlayCard"
         @cancel="cancelPlayCard"
+        :gameConfig="gameConfig"
       />
     </div>
   </div>
@@ -127,6 +128,7 @@ export default {
       errorGameState: null,
       errorCorruptionTypes: null,
       infToSpend: 1,
+      gameConfig: {},
     };
   },
   methods: {
@@ -144,11 +146,26 @@ export default {
     handleSelectCard(card) {
       this.selectedCard = card;
     },
-    handlePlayCard(result) {
+    async handlePlayCard(result) {
+      const actionTitle = this.selectedCard ? this.selectedCard.titulo : 'N/A'; // Capture title before clearing
       this.selectedCard = null;
       this.llmEvaluation = result.evaluation;
       // Actualizar el estado del juego con los datos de la evaluación
       this.gameState = result.evaluation.updated_game_state;
+
+      // Guardar la interacción en el historial
+      try {
+        await api.post('/history/add', {
+          level: this.gameState.level,
+          action_title: actionTitle,
+          narrated_plan_text: result.evaluation.narrated_plan_text,
+          llm_evaluation_json: result.evaluation.llm_evaluation_json,
+          llm_advice_json: result.evaluation.llm_advice_json,
+        });
+        console.log('Interacción LLM guardada en el historial.');
+      } catch (historyErr) {
+        console.error('Error al guardar la interacción LLM en el historial:', historyErr);
+      }
     },
     cancelPlayCard() {
       this.selectedCard = null;
@@ -205,11 +222,20 @@ export default {
         alert('No se pudo reducir el escándalo.');
       }
     },
+    async loadGameConfig() {
+      try {
+        const response = await api.get('/game/config');
+        this.gameConfig = response.data;
+      } catch (error) {
+        console.error('Error loading game config:', error);
+      }
+    },
   },
   async mounted() {
     await this.loadGameState();
     if (!this.errorGameState) {
       this.loadCorruptionTypes();
+      await this.loadGameConfig(); // Ensure gameConfig is loaded before proceeding
     }
   }
 };

@@ -12,6 +12,16 @@ const gameConfigData = [
     config_value: '5',
     description: 'Número de sub-opciones (cartas) por tipo de corrupción.',
   },
+  {
+    config_key: 'MAX_RECORDING_SECONDS',
+    config_value: '30',
+    description: 'Tiempo máximo de grabación de voz en segundos.',
+  },
+  {
+    config_key: 'MAX_PLAN_WORDS',
+    config_value: '150',
+    description: 'Número máximo de palabras para el plan del jugador.',
+  },
 ];
 
 const seedGameConfig = async () => {

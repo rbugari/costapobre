@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class="header-right">
-        <h1 class="game-title">El Ascenso Corrupto</h1>
+        <h1 class="game-title">CORRUPTIA</h1>
       </div>
     </header>
     <main class="game-board-main">

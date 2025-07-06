@@ -105,7 +105,7 @@ Este documento resume el estado actual de la implementación del videojuego "El 
 La interfaz de usuario en `Game.vue` está estructurada en las siguientes áreas, con visibilidad controlada por el estado del juego:
 
 *   **Encabezado del Juego (`game-header`):**
-    *   **`game-header-top`:** Título del juego ("El Ascenso Corrupto"), avatar del usuario y nickname.
+    *   **`game-header-top`:** Título del juego ("CORRUPTIA"), avatar del usuario y nickname.
     *   **`game-header-bottom`:**
         *   **Bloque Izquierdo (`level-details`):** Cargo actual, imagen del personaje del nivel y descripción visual del personaje.
         *   **Bloque Derecho (`resource-details`):** Nivel, Puntos de Corrupción (PC), Influencia (INF) y Barra de Escándalo (BE). Los recursos PC e INF muestran el valor actual y el requerido para el siguiente nivel (ej. "PC: 1500 / 5000").

@@ -24,6 +24,7 @@ app.use('/api/game', require('./routes/game'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/stt', require('./routes/stt'));
 
 
 const PORT = process.env.PORT || 5000;

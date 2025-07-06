@@ -1,6 +1,7 @@
 const UserGameState = require('../models/UserGameState');
 const GameLevel = require('../models/GameLevel');
 const User = require('../models/User'); // Importar el modelo User
+const GameConfig = require('../models/GameConfig');
 
 exports.loadProgress = async (req, res) => {
   try {
@@ -18,11 +19,14 @@ exports.loadProgress = async (req, res) => {
     const nextLevelNumber = gameState.level + 1;
     const nextLevel = await GameLevel.findOne({ where: { level_number: nextLevelNumber } });
 
+    const maxLevel = await GameLevel.max('level_number');
+
     res.json({
       ...gameState.toJSON(),
       levelInfo: gameLevel ? gameLevel.toJSON() : null,
       userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url } : null, // Enviar info del usuario
       nextLevelInfo: nextLevel ? nextLevel.toJSON() : null, // Enviar info del siguiente nivel
+      maxLevel: maxLevel,
     });
   } catch (err) {
     console.error(err.message);
@@ -113,6 +117,20 @@ exports.reduceScandal = async (req, res) => {
       be_reduced_this_turn: beReduction,
     });
 
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+exports.getGameConfig = async (req, res) => {
+  try {
+    const configs = await GameConfig.findAll();
+    const configMap = configs.reduce((acc, config) => {
+      acc[config.config_key] = config.config_value;
+      return acc;
+    }, {});
+    res.json(configMap);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
