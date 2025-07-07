@@ -1,27 +1,16 @@
 <template>
   <div id="app">
-    <GameLayout v-if="isLoggedIn" />
-    <router-view v-else />
+    <router-view />
   </div>
 </template>
 
 <script>
-import GameLayout from './components/GameLayout.vue';
-
 export default {
   name: 'App',
-  components: {
-    GameLayout,
-  },
-  computed: {
-    isLoggedIn() {
-      return !!localStorage.getItem('token');
-    }
-  },
   watch: {
     $route() {
-      // Forzar una re-evaluación de isLoggedIn cuando cambia la ruta
-      this.$forceUpdate();
+      // Este watcher puede ser útil para forzar actualizaciones si surgen problemas de reactividad.
+      // Por ahora, lo mantenemos simple, ya que el guardia de navegación del router debería ser suficiente.
     }
   }
 }
@@ -38,7 +27,7 @@ html, body {
 }
 
 #app {
-  min-height: 100vh; /* Asegura que #app ocupe toda la altura de la ventana */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;

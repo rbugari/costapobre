@@ -9,8 +9,8 @@
         <h3>Turno {{ index + 1 }} - Nivel {{ entry.level }}</h3>
         <p><strong>Acción:</strong> {{ entry.action_title }}</p>
         <p><strong>Plan Narrado:</strong> {{ entry.narrated_plan_text }}</p>
-        <p><strong>Evaluación del Mentor:</strong> {{ entry.llm_evaluation_json.evaluation }} (Cambio PC: {{ entry.llm_evaluation_json.score_change }})</p>
-        <p><strong>Consejo:</strong> {{ entry.llm_advice_json.advice }}</p>
+        <p><strong>Evaluación del Mentor:</strong> {{ entry.llm_evaluation_json?.evaluation }} (PC Ganado: {{ entry.llm_evaluation_json?.pc_ganancia?.valor }})</p>
+        <p><strong>Consejo:</strong> {{ entry.llm_advice_json?.advice }}</p>
         <p class="timestamp">{{ new Date(entry.timestamp).toLocaleString() }}</p>
       </div>
     </div>

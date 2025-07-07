@@ -67,8 +67,8 @@ export default {
       this.$router.push('/history');
     },
     logout() {
-      localStorage.removeItem('token');
-      this.$router.push('/');
+      localStorage.removeItem('accessToken'); // Corregido de 'token' a 'accessToken'
+      this.$router.push('/login'); // Redirigir explícitamente a /login
     },
     goToEditProfile() {
       this.$router.push({ name: 'EditProfile' });

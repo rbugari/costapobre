@@ -50,7 +50,7 @@ export default {
         return;
       }
       try {
-        await api.post('/auth/register', {
+        const res = await api.post('/auth/register', {
           nickname: this.nickname,
           email: this.email,
           password: this.password,
@@ -61,6 +61,8 @@ export default {
           avatar_url: this.avatar_url,
           selected_language: this.selected_language,
         });
+        localStorage.setItem('accessToken', res.data.accessToken);
+        localStorage.setItem('refreshToken', res.data.refreshToken);
         alert('¡Registro exitoso! Por favor, inicia sesión.');
         this.$router.push('/');
       } catch (err) {

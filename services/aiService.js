@@ -75,3 +75,16 @@ exports.evaluatePlan = async (cargo_actual, titulo_accion_elegida, tags_accion_e
     llm_advice_json: { advice },
   };
 };
+
+exports.generateScandalHeadline = async (cargo_actual, idioma, be_actual) => {
+  console.log(`Mock AI: Generating scandal headline for ${cargo_actual} with BE ${be_actual} in ${idioma}`);
+  const headlines = [
+    `¡${cargo_actual} sorprendido usando helicóptero oficial para ir de pesca!`, 
+    `Escándalo: ${cargo_actual} involucrado en trama de corrupción masiva.`, 
+    `¡${cargo_actual} pillado en fiesta ilegal con fondos públicos!`, 
+    `Crisis en ${cargo_actual}: Acusaciones de malversación de fondos.`, 
+    `La reputación de ${cargo_actual} por los suelos tras nuevas revelaciones.`
+  ];
+  const randomIndex = Math.floor(Math.random() * headlines.length);
+  return headlines[randomIndex];
+};

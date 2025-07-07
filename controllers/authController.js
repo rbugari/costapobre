@@ -35,15 +35,21 @@ exports.register = async (req, res) => {
       },
     };
 
-    jwt.sign(
+    // Generate Access Token (short-lived)
+    const accessToken = jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: 3600 },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
+      { expiresIn: '15m' } // Access token expires in 15 minutes
     );
+
+    // Generate Refresh Token (long-lived)
+    const refreshToken = jwt.sign(
+      payload,
+      process.env.JWT_SECRET, // Using the same secret for simplicity, but ideally a different one
+      { expiresIn: '7d' } // Refresh token expires in 7 days
+    );
+
+    res.json({ accessToken, refreshToken });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
@@ -72,18 +78,57 @@ exports.login = async (req, res) => {
       },
     };
 
-    jwt.sign(
+    // Generate Access Token (short-lived)
+    const accessToken = jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: 3600 },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
+      { expiresIn: '15m' } // Access token expires in 15 minutes
     );
+
+    // Generate Refresh Token (long-lived)
+    const refreshToken = jwt.sign(
+      payload,
+      process.env.JWT_SECRET, // Using the same secret for simplicity, but ideally a different one
+      { expiresIn: '7d' } // Refresh token expires in 7 days
+    );
+
+    res.json({ accessToken, refreshToken });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+};
+
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(401).json({ msg: 'No refresh token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+    const payload = {
+      user: {
+        id: decoded.user.id,
+      },
+    };
+
+    // Generate a new Access Token
+    const newAccessToken = jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' } // New access token expires in 15 minutes
+    );
+
+    res.json({ accessToken: newAccessToken });
+  } catch (err) {
+    console.error(err.message);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ msg: 'Refresh token expired' });
+    }
+    res.status(401).json({ msg: 'Invalid refresh token' });
   }
 };
 

@@ -31,6 +31,11 @@ const GameLevel = sequelize.define('GameLevel', {
     allowNull: false,
     defaultValue: 1,
   },
+  inf_gain_factor: {
+    type: DataTypes.FLOAT, // Usamos FLOAT porque los valores son decimales
+    allowNull: false,
+    defaultValue: 1.00,
+  },
   character_image_url: {
     type: DataTypes.STRING(512),
     allowNull: true,

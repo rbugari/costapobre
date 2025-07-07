@@ -30,12 +30,14 @@ export default {
   },
   methods: {
     async login() {
+      console.log('Intentando iniciar sesión...'); // Log de depuración
       try {
         const res = await api.post('/auth/login', {
           nickname: this.nickname,
           password: this.password
         });
-        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('accessToken', res.data.accessToken);
+        localStorage.setItem('refreshToken', res.data.refreshToken);
         this.$router.push('/game');
       } catch (err) {
         alert('Credenciales inválidas');

@@ -20,8 +20,8 @@ const UserGameState = sequelize.define('UserGameState', {
     defaultValue: 0,
   },
   inf: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
+    type: DataTypes.FLOAT,
+    defaultValue: 0.0,
   },
   be: {
     type: DataTypes.INTEGER,

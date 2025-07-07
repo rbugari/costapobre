@@ -2,6 +2,13 @@ const aiService = require('../services/aiService');
 const UserGameState = require('../models/UserGameState');
 const GameLevel = require('../models/GameLevel');
 const User = require('../models/User'); // Importar el modelo User
+const GameConfig = require('../models/GameConfig'); // Importar GameConfig
+
+// Helper function to get config value
+const getConfigValue = async (key) => {
+  const config = await GameConfig.findOne({ where: { config_key: key } });
+  return config ? config.config_value : null;
+};
 
 exports.getCorruptionTypes = async (req, res) => {
   console.log('Backend: Solicitud recibida para getCorruptionTypes.');
@@ -65,14 +72,15 @@ exports.evaluatePlan = async (req, res) => {
 
     console.log('aiController: llmEvaluation.pc_ganancia.valor =', llmEvaluation.pc_ganancia.valor);
     console.log('aiController: gameLevel.pc_gain_factor =', gameLevel.pc_gain_factor);
+    console.log('aiController: llmEvaluation.be_aumento.valor =', llmEvaluation.be_aumento.valor); // Nuevo log
 
     // 3. Aplicar fórmulas de ganancia de recursos
-    const pcGanado = (llmEvaluation.pc_ganancia.valor / 10) * gameLevel.pc_gain_factor;
+    const pcGanado = (llmEvaluation.pc_ganancia.valor / 10) * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100));
     const aumentoBE = llmEvaluation.be_aumento.valor;
-    const infGanado = llmEvaluation.inf_ganancia.valor;
+    const infGanado = llmEvaluation.inf_ganancia.valor * gameLevel.inf_gain_factor;
 
     gameState.pc += pcGanado;
-    gameState.inf += infGanado;
+    gameState.inf = Math.min(100, gameState.inf + infGanado);
     gameState.be += aumentoBE;
 
     // Asegurarse de que BE no exceda 100
@@ -81,22 +89,42 @@ exports.evaluatePlan = async (req, res) => {
     // 4. Reducción pasiva de BE (al final de cada turno exitoso)
     gameState.be = Math.max(0, gameState.be - 1);
 
-    // 5. Lógica de ascenso de nivel
-    const nextLevelNumber = gameState.level + 1;
-    const nextLevel = await GameLevel.findOne({ where: { level_number: nextLevelNumber } });
-
+    // 5. Lógica de ascenso de nivel (CORREGIDA)
+    const currentLevel = await GameLevel.findOne({ where: { level_number: gameState.level } });
     let ascended = false;
-    if (nextLevel && gameState.pc >= nextLevel.pc_required_for_ascension && gameState.inf >= nextLevel.inf_required_for_ascension) {
-      gameState.level = nextLevelNumber;
-      ascended = true;
-      console.log(`¡Jugador ${userId} ha ascendido al nivel ${nextLevelNumber}!`);
+
+    if (currentLevel && gameState.pc >= currentLevel.pc_required_for_ascension && gameState.inf >= currentLevel.inf_required_for_ascension) {
+      const nextLevelNumber = gameState.level + 1;
+      const nextLevel = await GameLevel.findOne({ where: { level_number: nextLevelNumber } });
+
+      if (nextLevel) {
+        const monetizacionNivelPremium = parseInt(await getConfigValue('MONETIZACION_NIVEL_PREMIUM'));
+        if (nextLevel.level_number >= monetizacionNivelPremium && !user.premium && !user.tipo_invitado) {
+          // Si el usuario no es premium/invitado y el siguiente nivel requiere premium, denegar el ascenso
+          return res.json({
+            requiresPremiumAccess: true,
+            msg: 'Premium pass required to access this level.',
+            // Incluir el estado actual del juego para que el frontend pueda mostrarlo
+            updated_game_state: {
+              ...gameState.toJSON(),
+              levelInfo: currentLevel ? currentLevel.toJSON() : null,
+              userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url } : null,
+            },
+          });
+        }
+        gameState.level = nextLevelNumber;
+        ascended = true;
+        console.log(`¡Jugador ${userId} ha ascendido al nivel ${nextLevelNumber}!`);
+      }
     }
 
     // Verificar si se dispara un escándalo
     let scandalTriggered = false;
+    let scandalHeadline = null;
     if (gameState.be >= 85) {
       scandalTriggered = true;
-      console.log(`¡Jugador ${userId} ha disparado un escándalo! BE: ${gameState.be}`);
+      scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
+      console.log(`¡Jugador ${userId} ha disparado un escándalo! BE: ${gameState.be}, Titular: ${scandalHeadline}`);
     }
 
     // 6. Guardar el estado del juego actualizado
@@ -120,6 +148,7 @@ exports.evaluatePlan = async (req, res) => {
       },
       ascended: ascended,
       scandal_triggered: scandalTriggered, // Añadir la bandera de escándalo
+      scandal_headline: scandalHeadline, // Añadir el titular del escándalo
       pc_ganado_this_turn: pcGanado,
       inf_ganado_this_turn: infGanado,
       be_aumento_this_turn: aumentoBE,

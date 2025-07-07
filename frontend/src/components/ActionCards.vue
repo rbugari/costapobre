@@ -45,6 +45,13 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
+        // Añadir verificaciones de nulidad
+        if (!this.$parent.gameState || !this.$parent.gameState.levelInfo || !this.$parent.gameState.userInfo) {
+          console.warn('ActionCards: gameState o userInfo no disponibles. No se pueden cargar las tarjetas.');
+          this.isLoading = false;
+          return;
+        }
+
         const response = await api.post('/ai/get-cards', {
           cargo_actual: this.$parent.gameState.levelInfo.title,
           tipo_de_corrupcion_elegido: this.type.name,

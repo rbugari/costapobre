@@ -90,10 +90,14 @@ export default {
           plan_del_jugador: this.plan,
           idioma: this.$parent.gameState.userInfo.selected_language || 'es',
         });
-        this.$emit('playCard', { evaluation: response.data });
+        this.$emit('playCard', { evaluation: response.data, narrated_plan_text: this.plan });
       } catch (err) {
         console.error('Error evaluating plan:', err);
-        alert('Error al evaluar el plan.');
+        if (err.response && err.response.status === 403) {
+          alert(err.response.data.msg); // Mostrar el mensaje específico del backend
+        } else {
+          alert('Error al evaluar el plan.');
+        }
       }
     },
     cancel() {

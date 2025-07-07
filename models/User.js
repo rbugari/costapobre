@@ -49,6 +49,26 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  premium: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  rescatePago: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  pagoTotal: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  tipo_invitado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  anuncios_vistos: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
 }, {
   tableName: 'users',
   timestamps: true,

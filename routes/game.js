@@ -19,4 +19,9 @@ router.post('/progress', auth, gameController.saveProgress);
 router.post('/reduce-scandal', auth, gameController.reduceScandal);
 router.get('/config', auth, gameController.getGameConfig);
 
+// @route   POST api/game/resolve-scandal
+// @desc    Resolve scandal event
+// @access  Private
+router.post('/resolve-scandal', auth, gameController.resolveScandal);
+
 module.exports = router;

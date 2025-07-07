@@ -6,6 +6,7 @@ import Game from '../views/Game.vue'
 import History from '../views/History.vue'
 import Help from '../views/Help.vue'
 import EditProfile from '../views/EditProfile.vue'
+import PremiumAccessPrompt from '../views/PremiumAccessPrompt.vue' // Importar el nuevo componente
 
 const routes = [
   {
@@ -17,6 +18,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/premium-access',
+    name: 'PremiumAccess',
+    component: PremiumAccessPrompt
   },
   {
     path: '/', // Ruta base para las vistas autenticadas
@@ -62,7 +68,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const loggedIn = localStorage.getItem('token')
+  const loggedIn = localStorage.getItem('accessToken') // Cambiado de 'token' a 'accessToken'
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
   if (requiresAuth && !loggedIn) {

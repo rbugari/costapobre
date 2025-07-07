@@ -3,13 +3,21 @@ const { connectDB, sequelize } = require('./config/db');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/game');
+const aiRoutes = require('./routes/ai');
+const historyRoutes = require('./routes/history');
+const uploadRoutes = require('./routes/upload');
+const sttRoutes = require('./routes/stt');
+const monetizationRoutes = require('./routes/monetization');
+
 const app = express();
 
 // Connect Database
 connectDB();
 
 // Sync Sequelize models
-sequelize.sync();
+sequelize.sync({ alter: true });
 
 // Init Middleware
 app.use(express.static('public'));
@@ -19,12 +27,13 @@ app.use(cors());
 app.get('/', (req, res) => res.send('API Running'));
 
 // Define Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/game', require('./routes/game'));
-app.use('/api/history', require('./routes/history'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/upload', require('./routes/upload'));
-app.use('/api/stt', require('./routes/stt'));
+app.use('/api/auth', authRoutes);
+app.use('/api/game', gameRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/stt', sttRoutes);
+app.use('/api/monetization', monetizationRoutes);
 
 
 const PORT = process.env.PORT || 5000;

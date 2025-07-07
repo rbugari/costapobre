@@ -40,6 +40,9 @@ export default {
       this.$emit('closeEvaluation');
     },
   },
+  mounted() {
+    console.log('EvaluationView mounted. Prop evaluation:', this.evaluation);
+  }
 };
 </script>
 
