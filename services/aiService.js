@@ -3,6 +3,109 @@ const GameConfig = require('../models/GameConfig');
 let globalGameConfig = {};
 
 const loadGameConfig = async () => {
+<<<<<<< Updated upstream
+=======
+  if (Object.keys(globalGameConfig).length === 0) { // Only load if not already loaded
+    try {
+      const configs = await GameConfig.findAll();
+      globalGameConfig = configs.reduce((acc, config) => {
+        acc[config.config_key] = parseInt(config.config_value, 10) || config.config_value;
+        return acc;
+      }, {});
+      console.log('GameConfig loaded.');
+    } catch (error) {
+      console.error('Error loading GameConfig:', error);
+      throw error;
+    }
+  }
+};
+
+const loadLLMConfigs = async () => {
+  if (Object.keys(llmConfigs).length === 0) { // Only load if not already loaded
+    try {
+      const configs = await LLMConfig.findAll();
+      // Clear existing properties to ensure a fresh load
+      for (const key in llmConfigs) {
+        delete llmConfigs[key];
+      }
+      configs.forEach(config => {
+        llmConfigs[config.config_name] = config;
+      });
+      console.log('LLMConfig loaded.');
+    } catch (error) {
+      console.error('Error loading LLMConfig:', error);
+      throw error;
+    }
+  }
+};
+
+// Combined function to ensure configs are loaded
+exports.ensureConfigsLoaded = async () => {
+  if (!configsLoaded) {
+    await loadGameConfig();
+    await loadLLMConfigs();
+    // Initialize Groq after LLM configs are loaded
+    if (!groq && llmConfigs.card_generator && llmConfigs.card_generator.llm_api_key) {
+      groq = new Groq({
+        apiKey: llmConfigs.card_generator.llm_api_key,
+      });
+      console.log('Groq SDK initialized with API key from DB.');
+    } else if (!groq) {
+      console.warn('Groq SDK not initialized: LLM API key not found in DB for card_generator.');
+    }
+    configsLoaded = true;
+  }
+};
+
+// Export the config objects directly
+exports.globalGameConfig = globalGameConfig;
+exports.llmConfigs = llmConfigs;
+
+exports.getCorruptionTypes = async (userId, cargo_actual, user_edad, user_ideologia, user_profile, idioma, num_tipos, playerLevel) => {
+  await exports.ensureConfigsLoaded(); // Ensure configs are loaded
+  const config = exports.llmConfigs.category_generator;
+  if (!config) {
+    throw new Error('LLM configuration for category_generator not found.');
+  }
+
+  // 1. Recuperación y Actualización del Historial
+  const historyEntries = await LLMCategoryGenerationHistory.findAll({
+    where: { user_id: userId },
+    order: [['timestamp', 'DESC']],
+  });
+
+  let previousCategories = [];
+  if (historyEntries.length > 0) {
+    historyEntries.forEach(entry => {
+      try {
+        const parsedCategories = JSON.parse(entry.categories_generated);
+        if (Array.isArray(parsedCategories)) {
+          previousCategories = previousCategories.concat(parsedCategories);
+        }
+      } catch (parseError) {
+        console.error('Error parsing categories_generated from history:', parseError);
+      }
+    });
+    previousCategories = [...new Set(previousCategories)];
+  }
+
+  // 2. Construcción del Prompt para Groq
+  let humanPromptContent = config.human_prompt;
+  humanPromptContent = humanPromptContent.replace(/{{cargo_actual}}/g, cargo_actual || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{user_edad}}/g, user_edad || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{user_ideologia}}/g, user_ideologia || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{user_profile}}/g, user_profile || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+  humanPromptContent = humanPromptContent.replace(/{{num_tipos}}/g, num_tipos);
+  humanPromptContent = humanPromptContent.replace(/{{categorias_previas}}/g, JSON.stringify(previousCategories));
+
+  const messages = [
+    { role: 'system', content: config.system_prompt || '' },
+    { role: 'user', content: humanPromptContent },
+  ];
+
+  // 3. Llamada al Modelo LLM de Groq
+>>>>>>> Stashed changes
   try {
     const configs = await GameConfig.findAll();
     globalGameConfig = configs.reduce((acc, config) => {
