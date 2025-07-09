@@ -7,11 +7,25 @@
         <input type="email" v-model="email" placeholder="Email" required />
         <input type="password" v-model="password" placeholder="Contraseña" required />
         <input type="password" v-model="passwordConfirm" placeholder="Confirmar Contraseña" required />
-        <input type="text" v-model="country_of_origin" placeholder="País de Origen" />
+        
+        <select v-model="country_of_origin">
+          <option value="">Seleccionar País</option>
+          <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
+        </select>
+
         <input type="number" v-model="age" placeholder="Edad" />
         <input type="text" v-model="political_ideology" placeholder="Ideología Política" />
         <textarea v-model="personal_profile" placeholder="Perfil Personal"></textarea>
-        <input type="text" v-model="avatar_url" placeholder="URL de Avatar (opcional)" />
+        
+        <div class="form-group">
+          <label for="avatar-upload">Foto de Avatar (opcional):</label>
+          <input type="file" id="avatar-upload" @change="onFileSelected" accept="image/*" />
+          <p class="help-text">Formatos permitidos: JPG, PNG, GIF, WEBP. Tamaño máximo: 2MB.</p>
+          <div v-if="avatarPreviewUrl" class="avatar-preview-container">
+            <img :src="avatarPreviewUrl" alt="Avatar Preview" class="avatar-preview" />
+          </div>
+        </div>
+
         <select v-model="selected_language">
           <option value="en">English</option>
           <option value="es">Español</option>
@@ -39,8 +53,16 @@ export default {
       age: null,
       political_ideology: '',
       personal_profile: '',
-      avatar_url: '',
+      selectedFile: null,
+      avatarPreviewUrl: null,
       selected_language: 'es',
+      countries: [
+        'Argentina', 'Bolivia', 'Chile', 'Colombia', 'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador',
+        'España', 'Guatemala', 'Honduras', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
+        'Puerto Rico', 'República Dominicana', 'Uruguay', 'Venezuela',
+        'Estados Unidos', 'Canadá', 'Reino Unido', 'Francia', 'Alemania', 'Italia', 'Brasil',
+        'Australia', 'China', 'India', 'Japón', 'Rusia', 'Sudáfrica', // Add more as needed
+      ],
     };
   },
   methods: {
@@ -49,17 +71,25 @@ export default {
         alert('Las contraseñas no coinciden');
         return;
       }
+
+      const formData = new FormData();
+      formData.append('nickname', this.nickname);
+      formData.append('email', this.email);
+      formData.append('password', this.password);
+      formData.append('country_of_origin', this.country_of_origin);
+      formData.append('age', this.age);
+      formData.append('political_ideology', this.political_ideology);
+      formData.append('personal_profile', this.personal_profile);
+      formData.append('selected_language', this.selected_language);
+      if (this.selectedFile) {
+        formData.append('avatar', this.selectedFile);
+      }
+
       try {
-        const res = await api.post('/auth/register', {
-          nickname: this.nickname,
-          email: this.email,
-          password: this.password,
-          country_of_origin: this.country_of_origin,
-          age: this.age,
-          political_ideology: this.political_ideology,
-          personal_profile: this.personal_profile,
-          avatar_url: this.avatar_url,
-          selected_language: this.selected_language,
+        const res = await api.post('/auth/register', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
         localStorage.setItem('accessToken', res.data.accessToken);
         localStorage.setItem('refreshToken', res.data.refreshToken);
@@ -68,6 +98,40 @@ export default {
       } catch (err) {
         alert(err.response.data.msg);
       }
+    },
+    onFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        this.selectedFile = null;
+        this.avatarPreviewUrl = null;
+        return;
+      }
+
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Formato de archivo no permitido. Por favor, sube una imagen JPG, PNG, GIF o WEBP.');
+        this.selectedFile = null;
+        this.avatarPreviewUrl = null;
+        return;
+      }
+
+      // Validar tamaño de archivo (2MB máximo)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        alert('El tamaño de la imagen excede el límite de 2MB.');
+        this.selectedFile = null;
+        this.avatarPreviewUrl = null;
+        return;
+      }
+
+      this.selectedFile = file;
+      // Generar previsualización
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.avatarPreviewUrl = e.target.result;
+      };
+      reader.readAsDataURL(file);
     },
   },
 };

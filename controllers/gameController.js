@@ -2,6 +2,7 @@ const UserGameState = require('../models/UserGameState');
 const GameLevel = require('../models/GameLevel');
 const User = require('../models/User'); // Importar el modelo User
 const GameConfig = require('../models/GameConfig');
+const { getGameConfig } = require('../config/gameConfig');
 const aiService = require('../services/aiService'); // Importar aiService
 
 // Helper function to get config value
@@ -32,6 +33,8 @@ exports.loadProgress = async (req, res) => {
       scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
     }
 
+    const gameConfig = getGameConfig();
+
     res.json({
       ...gameState.toJSON(),
       levelInfo: gameLevel ? gameLevel.toJSON() : null,
@@ -39,6 +42,7 @@ exports.loadProgress = async (req, res) => {
       maxLevel: maxLevel,
       scandal_triggered: scandalTriggered,
       scandal_headline: scandalHeadline,
+      gameMode: gameConfig.GAME_MODE,
     });
   } catch (err) {
     console.error(err.message);

@@ -6,6 +6,7 @@
     <div class="cards-grid">
       <div v-for="card in cards" :key="card.titulo" class="card" @click="selectCard(card)">
         <h4>{{ card.titulo }}</h4>
+        <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
         <p>{{ card.descripcion }}</p>
       </div>
     </div>
@@ -68,6 +69,9 @@ export default {
     selectCard(card) {
       this.$emit('selectCard', card);
     },
+    getCardImageUrl(relativePath) {
+      return `http://localhost:5000${relativePath}`;
+    },
   },
 };
 </script>
@@ -92,5 +96,12 @@ export default {
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.card-image {
+  width: 80%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  object-fit: cover;
 }
 </style>

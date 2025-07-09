@@ -14,7 +14,10 @@
 
       <div class="form-group">
         <label for="country_of_origin">País de Origen:</label>
-        <input type="text" id="country_of_origin" v-model="userProfile.country_of_origin" />
+        <select id="country_of_origin" v-model="userProfile.country_of_origin">
+          <option value="">Seleccionar País</option>
+          <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -76,6 +79,13 @@ export default {
       },
       selectedFile: null,
       avatarPreview: null,
+      countries: [
+        'Argentina', 'Bolivia', 'Chile', 'Colombia', 'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador',
+        'España', 'Guatemala', 'Honduras', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
+        'Puerto Rico', 'República Dominicana', 'Uruguay', 'Venezuela',
+        'Estados Unidos', 'Canadá', 'Reino Unido', 'Francia', 'Alemania', 'Italia', 'Brasil',
+        'Australia', 'China', 'India', 'Japón', 'Rusia', 'Sudáfrica', // Add more as needed
+      ],
     };
   },
   async mounted() {

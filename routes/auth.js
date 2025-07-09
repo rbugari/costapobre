@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
+const registerUpload = require('../middleware/registerUpload');
 
-router.post('/register', authController.register);
+router.post('/register', registerUpload.single('avatar'), authController.register);
 router.post('/login', authController.login);
 router.post('/refresh-token', authController.refreshToken);
 

@@ -4,9 +4,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-  const { nickname, email, password, avatar_url, selected_language, country_of_origin, age, political_ideology, personal_profile } = req.body;
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+  const { nickname, email, password, selected_language, country_of_origin, age, political_ideology, personal_profile } = req.body;
 
   try {
+    let avatar_url = null;
+    if (req.file) {
+      avatar_url = `/uploads/avatars/${req.file.filename}`;
+    }
+
     let user = await User.findOne({ where: { email } });
     if (user) {
       return res.status(400).json({ msg: 'User already exists' });
@@ -52,6 +59,15 @@ exports.register = async (req, res) => {
     res.json({ accessToken, refreshToken });
   } catch (err) {
     console.error(err.message);
+    if (err instanceof multer.MulterError) {
+      let msg = 'Error al subir el archivo.';
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        msg = 'El archivo es demasiado grande. Máximo 2MB.';
+      } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        msg = 'Demasiados archivos o nombre de campo incorrecto.';
+      }
+      return res.status(400).json({ msg: msg });
+    }
     res.status(500).send('Server error');
   }
 };

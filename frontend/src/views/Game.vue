@@ -28,8 +28,8 @@
         </p>
         <p>
           Influencia (INF): <strong>{{ gameState.inf }}</strong>
-          <span v-if="gameState.levelInfo">
-            / {{ gameState.levelInfo.inf_required_for_ascension }}
+          <span>
+            / 100
           </span>
         </p>
         <p>
@@ -114,6 +114,16 @@
         :evaluation="llmEvaluation"
         @closeEvaluation="closeEvaluation"
       />
+
+      <div v-if="isDevMode && devCalculationDetails" class="dev-calculation-box">
+        <h3>Detalles de Cálculo (Dev)</h3>
+        <p><strong>Puntuación LLM (1-10):</strong> {{ devCalculationDetails.llm_pc_valor }}</p>
+        <p><strong>Factor de Ganancia PC (Nivel):</strong> {{ devCalculationDetails.pc_gain_factor }}</p>
+        <p><strong>Influencia Actual:</strong> {{ devCalculationDetails.inf_actual }}</p>
+        <p><strong>Multiplicador por Influencia:</strong> {{ devCalculationDetails.influence_multiplier.toFixed(2) }}</p>
+        <p><strong>Ganancia PC (sin redondear):</strong> {{ devCalculationDetails.raw_pc_gain.toFixed(2) }}</p>
+        <p><strong>Ganancia PC (final redondeada):</strong> {{ devCalculationDetails.final_pc_gain }}</p>
+      </div>
     </div>
 
     <!-- Tarjeta seleccionada para jugar -->
@@ -123,6 +133,7 @@
         @playCard="handlePlayCard"
         @cancel="cancelPlayCard"
         :gameConfig="gameConfig"
+        :generatedPlan="generatedDevPlan"
       />
     </div>
 
@@ -145,6 +156,29 @@
       <h3>¡Acceso Premium Requerido!</h3>
       <p>Has completado los niveles gratuitos. Adquiere el Pase Premium para continuar.</p>
       <button @click="$router.push('/premium-access')">Ir a la Tienda Premium</button>
+    </div>
+
+    <!-- Developer Tools -->
+    <div v-if="isDevMode" class="dev-tools">
+      <h3>Herramientas de Desarrollo</h3>
+      <button @click="addPc(1000)">Añadir 1000 PC</button>
+      <button @click="addInf(100)">Añadir 100 INF</button>
+      <button @click="triggerScandal">Forzar Escándalo</button>
+      <select v-model="selectedLevel" @change="changeLevel">
+        <option disabled value="">Seleccionar Nivel</option>
+        <option v-for="n in gameState.maxLevel" :key="n" :value="n">Nivel {{ n }}</option>
+      </select>
+      <button @click="resetProgress">Resetear Progreso</button>
+
+      <div v-if="selectedCard">
+        <select v-model="devPlanQuality">
+          <option value="muy bueno">Muy Bueno</option>
+          <option value="bueno">Bueno</option>
+          <option value="regular">Regular</option>
+          <option value="malo">Malo</option>
+        </select>
+        <button @click="generateDevPlan">Generar Plan (Dev)</button>
+      </div>
     </div>
 
   </div>
@@ -185,6 +219,11 @@ export default {
       showScandalEvent: false, // Nuevo estado para controlar la visibilidad del evento de escándalo
       scandalHeadline: '', // Nuevo estado para el titular del escándalo
       currentScreen: 'game', // Controla qué pantalla se muestra: 'game', 'evaluation', 'scandal', 'gameOver', 'premiumAccess'
+      isDevMode: false, // Para activar herramientas de desarrollo
+      selectedLevel: '',
+      devPlanQuality: 'bueno', // Calidad por defecto para el plan generado en dev
+      generatedDevPlan: '', // Para almacenar el plan generado por el LLM en modo dev
+      devCalculationDetails: null, // Para mostrar el paso a paso de la fórmula en modo dev
     };
   },
   methods: {
@@ -237,6 +276,7 @@ export default {
       // Si no hay GAME OVER, premium requerido o escándalo, mostrar la evaluación normal
       this.llmEvaluation = result.evaluation; // Asignar la evaluación completa
       this.gameState = result.evaluation.updated_game_state; // Actualizar el estado del juego
+      this.devCalculationDetails = result.evaluation.dev_calculation_details; // Store dev calculation details
       this.currentScreen = 'evaluation';
 
       // Check for scandal rescue prompt after evaluation (si no se disparó un escándalo mayor)
@@ -269,6 +309,7 @@ export default {
       this.llmEvaluation = null;
       this.selectedCorruptionType = null;
       this.currentScreen = 'game'; // Volver a la pantalla de juego normal
+      this.loadCorruptionTypes(); // Recargar los tipos de corrupción para el siguiente turno
     },
     // Nuevo método para manejar la resolución del escándalo desde ScandalEvent.vue
     handleScandalResolved(updatedGameState) {
@@ -278,12 +319,78 @@ export default {
       this.selectedCorruptionType = null; // Limpiar el tipo de corrupción seleccionado
       this.currentScreen = 'game'; // Volver a la pantalla de juego normal
     },
+    async addPc(amount) {
+      if (this.gameState) {
+        this.gameState.pc += amount;
+        await this.saveProgress();
+      }
+    },
+    async addInf(amount) {
+      if (this.gameState) {
+        this.gameState.inf = Math.min(100, this.gameState.inf + amount);
+        await this.saveProgress();
+      }
+    },
+    async saveProgress() {
+      if (!this.gameState) return;
+      try {
+        const response = await api.post('/game/progress', this.gameState);
+        this.gameState = response.data; // Update local state with the response from the server
+      } catch (error) {
+        console.error('Error saving game state:', error);
+      }
+    },
+    async triggerScandal() {
+      if (this.gameState) {
+        this.gameState.be = 90;
+        await this.saveProgress();
+        this.loadGameState(); // Recargar el estado para que el backend procese el escándalo
+      }
+    },
+    async changeLevel() {
+      if (this.gameState && this.selectedLevel) {
+        this.gameState.level = this.selectedLevel;
+        await this.saveProgress();
+        this.loadGameState();
+      }
+    },
+    async resetProgress() {
+      if (this.gameState) {
+        this.gameState.level = 1;
+        this.gameState.pc = 0;
+        this.gameState.inf = 0;
+        this.gameState.be = 0;
+        await this.saveProgress();
+        this.loadGameState();
+      }
+    },
+    async generateDevPlan() {
+      if (!this.selectedCard) {
+        alert('Por favor, selecciona una carta primero.');
+        return;
+      }
+      try {
+        const response = await api.post('/ai/generate-dev-plan', {
+          titulo_accion_elegida: this.selectedCard.titulo,
+          descripcion_accion_elegida: this.selectedCard.descripcion,
+          tags_accion_elegida: this.selectedCard.tags_obligatorios,
+          quality_level: this.devPlanQuality,
+          idioma: this.gameState.userInfo.selected_language || 'es',
+        });
+        this.generatedDevPlan = response.data.plan;
+        alert('Plan generado con éxito!');
+      } catch (error) {
+        console.error('Error generating dev plan:', error);
+        alert(`Error al generar plan de desarrollo: ${error.response ? error.response.data.msg : error.message}`);
+      }
+    },
     async loadGameState() {
       this.isLoadingGameState = true;
       this.errorGameState = null;
       try {
         const response = await api.get('/game/progress');
         this.gameState = response.data;
+        this.isDevMode = this.gameState.gameMode === 'desarrollo';
 
         // Verificar si se disparó un escándalo al cargar el juego
         if (response.data.scandal_triggered) {
@@ -556,5 +663,42 @@ export default {
 
 .ad-limit-warning h3 {
   color: #333;
+}
+
+.dev-tools {
+  background-color: #424242;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 8px;
+  border: 1px solid #616161;
+}
+
+.dev-tools h3 {
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.dev-tools button {
+  background-color: #616161;
+  color: white;
+  margin-right: 10px;
+}
+
+.dev-calculation-box {
+  background-color: #3a3a3a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  border: 1px solid #555;
+  color: #f3f3f3;
+}
+
+.dev-calculation-box h3 {
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.dev-calculation-box p {
+  margin-bottom: 5px;
 }
 </style>

@@ -18,4 +18,9 @@ router.post('/get-cards', authMiddleware, aiController.getCards);
 // @access  Private
 router.post('/evaluate-plan', authMiddleware, aiController.evaluatePlan);
 
+// @route   POST api/ai/generate-dev-plan
+// @desc    (DEV-ONLY) Generate a plan for the player
+// @access  Private
+router.post('/generate-dev-plan', authMiddleware, aiController.generateDevPlan);
+
 module.exports = router;

@@ -67,6 +67,11 @@ const gameConfigData = [
     config_value: '3',
     description: 'Cantidad máxima de anuncios recompensados que puede ver un invitado.',
   },
+  {
+    config_key: 'GAME_MODE',
+    config_value: 'desarrollo',
+    description: 'Modo de ejecución del juego (desarrollo o produccion).',
+  },
 ];
 
 const seedGameConfig = async () => {

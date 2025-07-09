@@ -3,6 +3,7 @@
     <h3>Tu Plan Maestro</h3>
     <div class="selected-card">
       <h4>{{ card.titulo }}</h4>
+      <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
       <p>{{ card.descripcion }}</p>
       <div class="tags">
         <strong>Tags obligatorios:</strong>
@@ -44,6 +45,10 @@ export default {
       type: Object,
       default: null,
     },
+    generatedPlan: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -63,6 +68,11 @@ export default {
     console.log('PlayCardView mounted. Initial gameConfig:', this.gameConfig);
   },
   watch: {
+    generatedPlan(newVal) {
+      if (newVal) {
+        this.plan = newVal;
+      }
+    },
     gameConfig: {
       immediate: true,
       handler(newConfig) {
@@ -155,6 +165,9 @@ export default {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     },
+    getCardImageUrl(relativePath) {
+      return `http://localhost:5000${relativePath}`;
+    },
   },
   beforeDestroy() {
     this.stopTimer();
@@ -173,6 +186,16 @@ export default {
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 15px;
+}
+.card-image {
+  width: 30%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  object-fit: cover;
+  display: block; /* Para centrar la imagen */
+  margin-left: auto; /* Para centrar la imagen */
+  margin-right: auto; /* Para centrar la imagen */
 }
 .tags {
   margin-top: 10px;

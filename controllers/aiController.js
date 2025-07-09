@@ -2,6 +2,7 @@ const aiService = require('../services/aiService');
 const UserGameState = require('../models/UserGameState');
 const GameLevel = require('../models/GameLevel');
 const User = require('../models/User'); // Importar el modelo User
+const { getGameConfig } = require('../config/gameConfig');
 const GameConfig = require('../models/GameConfig'); // Importar GameConfig
 
 // Helper function to get config value
@@ -16,7 +17,20 @@ exports.getCorruptionTypes = async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await User.findByPk(userId);
-    const types = await aiService.getCorruptionTypes(cargo_actual, idioma, user.country_of_origin, user.age, user.political_ideology, user.personal_profile);
+    const gameState = await UserGameState.findOne({ where: { user_id: userId } });
+    const playerLevel = gameState ? gameState.level : 1; // Default to 1 if no game state
+    const num_tipos = parseInt(await getConfigValue('NUM_CORRUPTION_TYPES')) || 10; // Get from game_config, default to 10
+
+    const types = await aiService.getCorruptionTypes(
+      userId,
+      cargo_actual,
+      user.age,
+      user.political_ideology,
+      user.personal_profile,
+      idioma,
+      num_tipos,
+      playerLevel
+    );
     res.json(types);
   } catch (err) {
     console.error(err.message);
@@ -29,7 +43,16 @@ exports.getCards = async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await User.findByPk(userId);
-    const cards = await aiService.getCards(cargo_actual, tipo_de_corrupcion_elegido, idioma, user.country_of_origin, user.age, user.political_ideology, user.personal_profile);
+    const gameState = await UserGameState.findOne({ where: { user_id: userId } });
+    const playerLevel = gameState ? gameState.level : 1; // Default to 1 if no game state
+
+    const cards = await aiService.getCards(
+      userId,
+      cargo_actual,
+      tipo_de_corrupcion_elegido,
+      idioma,
+      playerLevel
+    );
     res.json(cards);
   } catch (err) {
     console.error(err.message);
@@ -55,11 +78,14 @@ exports.evaluatePlan = async (req, res) => {
 
     const user = await User.findByPk(userId); // Obtener los datos del usuario para pasar al LLM
 
+    const tagsArray = Array.isArray(tags_accion_elegida) ? tags_accion_elegida : [tags_accion_elegida];
+
     // 2. Obtener la evaluación del LLM
     const evaluationResult = await aiService.evaluatePlan(
+      userId, 
       cargo_actual, 
       titulo_accion_elegida, 
-      tags_accion_elegida, 
+      tagsArray, 
       plan_del_jugador, 
       idioma, 
       user.country_of_origin, 
@@ -75,12 +101,12 @@ exports.evaluatePlan = async (req, res) => {
     console.log('aiController: llmEvaluation.be_aumento.valor =', llmEvaluation.be_aumento.valor); // Nuevo log
 
     // 3. Aplicar fórmulas de ganancia de recursos
-    const pcGanado = (llmEvaluation.pc_ganancia.valor / 10) * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100));
+    const pcGanado = Math.round(llmEvaluation.pc_ganancia.valor * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100)));
     const aumentoBE = llmEvaluation.be_aumento.valor;
-    const infGanado = llmEvaluation.inf_ganancia.valor * gameLevel.inf_gain_factor;
+    const infGanado = Math.round(llmEvaluation.inf_ganancia.valor * gameLevel.inf_gain_factor);
 
     gameState.pc += pcGanado;
-    gameState.inf = Math.min(100, gameState.inf + infGanado);
+    gameState.inf = Math.round(Math.min(100, gameState.inf + infGanado));
     gameState.be += aumentoBE;
 
     // Asegurarse de que BE no exceda 100
@@ -137,6 +163,24 @@ exports.evaluatePlan = async (req, res) => {
     // Obtener la información del *nuevo* siguiente nivel si hubo ascenso
     const newNextLevelNumber = gameState.level + 1;
     const newNextLevel = await GameLevel.findOne({ where: { level_number: newNextLevelNumber } });
+
+    // Calculate dev calculation details
+    const llm_pc_valor = llmEvaluation.pc_ganancia.valor;
+    const pc_gain_factor = gameLevel.pc_gain_factor;
+    const inf_actual = gameState.inf;
+    const influence_multiplier = (1 + (inf_actual / 100));
+    const raw_pc_gain = llm_pc_valor * pc_gain_factor * influence_multiplier;
+    const final_pc_gain = Math.round(raw_pc_gain);
+
+    const dev_calculation_details = {
+      llm_pc_valor: llm_pc_valor,
+      pc_gain_factor: pc_gain_factor,
+      inf_actual: inf_actual,
+      influence_multiplier: influence_multiplier,
+      raw_pc_gain: raw_pc_gain,
+      final_pc_gain: final_pc_gain,
+    };
+
     res.json({
       llm_evaluation_json: llmEvaluation,
       llm_advice_json: llmAdvice,
@@ -150,12 +194,37 @@ exports.evaluatePlan = async (req, res) => {
       scandal_triggered: scandalTriggered, // Añadir la bandera de escándalo
       scandal_headline: scandalHeadline, // Añadir el titular del escándalo
       pc_ganado_this_turn: pcGanado,
-      inf_ganado_this_turn: infGanado,
-      be_aumento_this_turn: aumentoBE,
+      inf_ganado_this_turn: Math.floor(infGanado),
+      be_aumento_this_turn: Math.floor(aumentoBE),
+      dev_calculation_details: dev_calculation_details, // Add dev calculation details
     });
 
   } catch (err) {
     console.error('Error evaluating plan:', err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+exports.generateDevPlan = async (req, res) => {
+  const { getGameConfig } = require('../config/gameConfig');
+  const config = getGameConfig();
+  if (config.GAME_MODE !== 'desarrollo') {
+    return res.status(403).send('This feature is only available in development mode.');
+  }
+
+  const { titulo_accion_elegida, descripcion_accion_elegida, tags_accion_elegida, quality_level, idioma } = req.body;
+
+  try {
+    const plan = await aiService.generateDevPlan(
+      titulo_accion_elegida,
+      descripcion_accion_elegida,
+      tags_accion_elegida,
+      quality_level,
+      idioma
+    );
+    res.json({ plan });
+  } catch (err) {
+    console.error(err.message);
     res.status(500).send('Server error');
   }
 };

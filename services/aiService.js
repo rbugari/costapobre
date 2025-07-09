@@ -1,10 +1,20 @@
 const GameConfig = require('../models/GameConfig');
+const LLMConfig = require('../models/LLMConfig');
+const LLMCategoryGenerationHistory = require('../models/LLMCategoryGenerationHistory');
+const LLMCardGenerationHistory = require('../models/LLMCardGenerationHistory');
+const LLMInteractionHistory = require('../models/LLMInteractionHistory');
+const Groq = require('groq-sdk');
+const fs = require('fs');
+const path = require('path');
 
+let groq = null;
 let globalGameConfig = {};
+let llmConfigs = {};
+let configsLoaded = false;
+let cardImageFilenames = [];
 
-const loadGameConfig = async () => {
-<<<<<<< Updated upstream
-=======
+const CARD_IMAGES_DIR = path.join(__dirname, '..', 'public', 'images', 'cards');
+  const loadGameConfig = async () => {
   if (Object.keys(globalGameConfig).length === 0) { // Only load if not already loaded
     try {
       const configs = await GameConfig.findAll();
@@ -39,11 +49,26 @@ const loadLLMConfigs = async () => {
   }
 };
 
+const loadCardImages = async () => {
+  try {
+    const files = await fs.promises.readdir(CARD_IMAGES_DIR);
+    cardImageFilenames = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(ext);
+    });
+    console.log(`Loaded ${cardImageFilenames.length} card images.`);
+  } catch (error) {
+    console.error('Error loading card images:', error);
+    // It's okay to proceed without images if the directory is empty or doesn't exist
+  }
+};
+
 // Combined function to ensure configs are loaded
 exports.ensureConfigsLoaded = async () => {
   if (!configsLoaded) {
     await loadGameConfig();
     await loadLLMConfigs();
+    await loadCardImages(); // Load card images
     // Initialize Groq after LLM configs are loaded
     if (!groq && llmConfigs.card_generator && llmConfigs.card_generator.llm_api_key) {
       groq = new Groq({
@@ -105,89 +130,239 @@ exports.getCorruptionTypes = async (userId, cargo_actual, user_edad, user_ideolo
   ];
 
   // 3. Llamada al Modelo LLM de Groq
->>>>>>> Stashed changes
   try {
-    const configs = await GameConfig.findAll();
-    globalGameConfig = configs.reduce((acc, config) => {
-      acc[config.config_key] = parseInt(config.config_value, 10) || config.config_value;
-      return acc;
-    }, {});
-    console.log('Configuración de juego cargada:', globalGameConfig);
+    const chatCompletion = await groq.chat.completions.create({
+      messages,
+      model: config.model_name,
+      temperature: parseFloat(config.temperature),
+      max_tokens: parseInt(config.max_tokens, 10),
+      response_format: { type: "json_object" },
+    });
+
+    const llmResponseContent = chatCompletion.choices[0]?.message?.content || '{}';
+    const parsedResponse = JSON.parse(llmResponseContent);
+    const categories = parsedResponse.categorias || [];
+
+    // 4. Guardar en el Historial
+    await LLMCategoryGenerationHistory.create({
+      user_id: userId,
+      timestamp: new Date(),
+      prompt_sent: JSON.stringify(messages),
+      llm_response: llmResponseContent,
+      categories_generated: JSON.stringify(categories),
+    });
+
+    return categories;
   } catch (error) {
-    console.error('Error cargando la configuración del juego:', error);
+    console.error('Error calling Groq API for corruption types:', error);
+    throw error;
   }
 };
 
-// Cargar la configuración al iniciar el servicio
-loadGameConfig();
-
-exports.getCorruptionTypes = async (cargo_actual, idioma, country_of_origin, age, political_ideology, personal_profile) => {
-  // Mock implementation for FlowiseAI Flujo 1: "Generador de Categorías"
-  const num_corruption_types = globalGameConfig.NUM_CORRUPTION_TYPES || 10; // Fallback a 10
-  console.log(`Mock AI: Generating ${num_corruption_types} corruption types for ${cargo_actual} in ${idioma} (Country: ${country_of_origin}, Age: ${age}, Ideology: ${political_ideology})`);
-  // Generar un array de mock data con la longitud especificada
-  const mockTypes = Array.from({ length: num_corruption_types }, (_, i) => `Tipo de Corrupción ${i + 1}`);
-  return mockTypes;
-};
-
-exports.getCards = async (cargo_actual, tipo_de_corrupcion_elegido, idioma, country_of_origin, age, political_ideology, personal_profile) => {
-  // Mock implementation for FlowiseAI Flujo 2: "Generador de Cartas"
-  const num_corruption_cards = globalGameConfig.NUM_CORRUPTION_CARDS || 5; // Fallback a 5
-  console.log(`Mock AI: Generating ${num_corruption_cards} cards for ${tipo_de_corrupcion_elegido} at ${cargo_actual} in ${idioma} (Country: ${country_of_origin}, Age: ${age}, Ideology: ${political_ideology})`);
-  // Generar un array de mock data con la longitud especificada
-  const mockCards = Array.from({ length: num_corruption_cards }, (_, i) => ({
-    "titulo": `Sub-opción ${i + 1} de ${tipo_de_corrupcion_elegido}`,
-    "descripcion": `Descripción de la sub-opción ${i + 1}.`,
-    "imagen_base64": `mock_image_base64_${i + 1}`,
-    "tags_obligatorios": [`tag${i + 1}a`, `tag${i + 1}b`, `tag${i + 1}c`]
-  }));
-  return mockCards;
-};
-
-exports.evaluatePlan = async (cargo_actual, titulo_accion_elegida, tags_accion_elegida, plan_del_jugador, idioma, country_of_origin, age, political_ideology, personal_profile) => {
-  // Mock implementation for FlowiseAI Flujo 3: "Evaluador de Planes"
-  console.log(`Mock AI: Evaluating plan for ${titulo_accion_elegida} at ${cargo_actual} in ${idioma} (Country: ${country_of_origin}, Age: ${age}, Ideology: ${political_ideology})`);
-  console.log(`Plan: ${plan_del_jugador} with tags: ${tags_accion_elegida}`);
-
-  // Simple mock evaluation logic
-  let evaluation = "";
-  let advice = "";
-  let score_change = 0;
-
-  if (plan_del_jugador.includes("éxito") || plan_del_jugador.includes("ganar")) {
-    evaluation = "Tu plan es audaz y promete grandes recompensas. ¡Bien hecho!";
-    advice = "Asegúrate de cubrir tus huellas para evitar sorpresas.";
-    score_change = 50;
-  } else if (plan_del_jugador.includes("fallo") || plan_del_jugador.includes("perder")) {
-    evaluation = "Tu plan parece tener algunas debilidades. Necesitas ser más astuto.";
-    advice = "Reconsidera tus pasos y busca puntos ciegos.";
-    score_change = -20;
-  } else {
-    evaluation = "Un plan decente, pero podría ser más ambicioso.";
-    advice = "Piensa en cómo maximizar tus ganancias y minimizar los riesgos.";
-    score_change = 20;
+exports.getCards = async (userId, cargo_actual, tipo_de_corrupcion_elegido, idioma, playerLevel) => {
+  await exports.ensureConfigsLoaded();
+  const config = exports.llmConfigs.card_generator;
+  if (!config) {
+    throw new Error('LLM configuration for card_generator not found.');
   }
 
-  return {
-    llm_evaluation_json: {
-      evaluation,
-      pc_ganancia: { valor: Math.floor(Math.random() * 10) + 1 }, // Valor entre 1 y 10
-      be_aumento: { valor: Math.floor(Math.random() * 10) + 1 }, // Valor entre 1 y 10
-      inf_ganancia: { valor: Math.floor(Math.random() * 10) + 1 }, // Valor entre 1 y 10
-    },
-    llm_advice_json: { advice },
-  };
-};
+  // 1. Recuperación y Actualización del Historial de Cartas
+  const historyEntries = await LLMCardGenerationHistory.findAll({
+    where: { user_id: userId },
+    order: [['timestamp', 'DESC']],
+  });
 
-exports.generateScandalHeadline = async (cargo_actual, idioma, be_actual) => {
-  console.log(`Mock AI: Generating scandal headline for ${cargo_actual} with BE ${be_actual} in ${idioma}`);
-  const headlines = [
-    `¡${cargo_actual} sorprendido usando helicóptero oficial para ir de pesca!`, 
-    `Escándalo: ${cargo_actual} involucrado en trama de corrupción masiva.`, 
-    `¡${cargo_actual} pillado en fiesta ilegal con fondos públicos!`, 
-    `Crisis en ${cargo_actual}: Acusaciones de malversación de fondos.`, 
-    `La reputación de ${cargo_actual} por los suelos tras nuevas revelaciones.`
+  let previousCards = [];
+  if (historyEntries.length > 0) {
+    historyEntries.forEach(entry => {
+      try {
+        const parsedCards = JSON.parse(entry.cards_generated);
+        if (Array.isArray(parsedCards)) {
+          previousCards = previousCards.concat(parsedCards);
+        }
+      } catch (parseError) {
+        console.error('Error parsing cards_generated from history:', parseError);
+      }
+    });
+    // Consider a more sophisticated way to handle previous cards if needed,
+    // e.g., filtering by type or ensuring uniqueness based on title.
+  }
+
+  // 2. Construcción del Prompt para Groq
+  let humanPromptContent = config.human_prompt;
+  humanPromptContent = humanPromptContent.replace(/{{cargo_actual}}/g, cargo_actual || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{tipo_de_corrupcion_elegido}}/g, tipo_de_corrupcion_elegido || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+  humanPromptContent = humanPromptContent.replace(/{{num_cartas}}/g, exports.globalGameConfig.NUM_CORRUPTION_CARDS || 5);
+  humanPromptContent = humanPromptContent.replace(/{{cartas_previas}}/g, JSON.stringify(previousCards));
+
+  const messages = [
+    { role: 'system', content: config.system_prompt || '' },
+    { role: 'user', content: humanPromptContent },
   ];
-  const randomIndex = Math.floor(Math.random() * headlines.length);
-  return headlines[randomIndex];
+
+  // 3. Llamada al Modelo LLM de Groq
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages,
+      model: config.model_name,
+      temperature: parseFloat(config.temperature),
+      max_tokens: parseInt(config.max_tokens, 10),
+      response_format: { type: "json_object" },
+    });
+
+    const llmResponseContent = chatCompletion.choices[0]?.message?.content || '{}';
+    const parsedResponse = JSON.parse(llmResponseContent);
+    // Groq might return 'subopciones' or 'options'
+    const cards = parsedResponse.subopciones || parsedResponse.options || [];
+
+    // Add a random image URL to each card
+    const cardsWithImages = cards.map(card => {
+      const randomImage = cardImageFilenames[Math.floor(Math.random() * cardImageFilenames.length)];
+      const imageUrl = randomImage ? `/images/cards/${randomImage}` : null;
+      return { ...card, image_url: imageUrl };
+    });
+
+    // 4. Guardar en el Historial
+    await LLMCardGenerationHistory.create({
+      user_id: userId,
+      timestamp: new Date(),
+      prompt_sent: JSON.stringify(messages),
+      llm_response: llmResponseContent,
+      cards_generated: JSON.stringify(cardsWithImages),
+    });
+
+    return cardsWithImages;
+  } catch (error) {
+    console.error('Error calling Groq API for cards:', error);
+    throw error;
+  }
 };
+
+exports.evaluatePlan = async (userId, cargo_actual, titulo_accion_elegida, tags_accion_elegida, plan_del_jugador, idioma, playerLevel) => {
+  await exports.ensureConfigsLoaded();
+  const config = exports.llmConfigs.plan_evaluator;
+  if (!config) {
+    throw new Error('LLM configuration for plan_evaluator not found.');
+  }
+
+  // 1. Construcción del Prompt para Groq
+  let humanPromptContent = config.human_prompt;
+  humanPromptContent = humanPromptContent.replace(/{{cargo_actual}}/g, cargo_actual || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{titulo_accion_elegida}}/g, titulo_accion_elegida || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{tags_accion_elegida}}/g, Array.isArray(tags_accion_elegida) ? tags_accion_elegida.join(', ') : tags_accion_elegida || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{plan_del_jugador}}/g, plan_del_jugador || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+
+  const messages = [
+    { role: 'system', content: config.system_prompt || '' },
+    { role: 'user', content: humanPromptContent },
+  ];
+
+  // 2. Llamada al Modelo LLM de Groq
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages,
+      model: config.model_name,
+      temperature: parseFloat(config.temperature),
+      max_tokens: parseInt(config.max_tokens, 10),
+      response_format: { type: "json_object" },
+    });
+
+    const llmResponseContent = chatCompletion.choices[0]?.message?.content || '{}';
+    const parsedResponse = JSON.parse(llmResponseContent);
+
+    // 3. Guardar en el Historial de Interacciones
+    await LLMInteractionHistory.create({
+      user_id: userId,
+      timestamp: new Date(),
+      narrated_plan_text: plan_del_jugador,
+      human_prompt_sent: JSON.stringify(messages), // Store the full prompt sent
+      llm_response: llmResponseContent,
+      llm_evaluation_json: parsedResponse.llm_evaluation_json || {},
+      llm_advice_json: parsedResponse.llm_advice_json || {},
+    });
+
+    return {
+      llm_evaluation_json: parsedResponse.llm_evaluation_json || {},
+      llm_advice_json: parsedResponse.llm_advice_json || {},
+    };
+  } catch (error) {
+    console.error('Error calling Groq API for plan evaluation:', error);
+    throw error;
+  }
+};
+
+exports.generateScandalHeadline = async (userId, cargo_actual, idioma, be_actual) => {
+  await exports.ensureConfigsLoaded();
+  const config = exports.llmConfigs.scandal_headline_generator;
+  if (!config) {
+    throw new Error('LLM configuration for scandal_headline_generator not found.');
+  }
+
+  console.log('Scandal Headline Generator Config:', config);
+
+  let humanPromptContent = config.human_prompt;
+  humanPromptContent = humanPromptContent.replace(/{{cargo_actual}}/g, cargo_actual || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+  humanPromptContent = humanPromptContent.replace(/{{be_actual}}/g, be_actual);
+
+  const messages = [
+    { role: 'system', content: config.system_prompt || '' },
+    { role: 'user', content: humanPromptContent },
+  ];
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages,
+      model: config.model_name,
+      temperature: parseFloat(config.temperature),
+      max_tokens: parseInt(config.max_tokens, 10),
+      response_format: { type: "json_object" },
+    });
+
+    const llmResponseContent = chatCompletion.choices[0]?.message?.content || '{}';
+    const parsedResponse = JSON.parse(llmResponseContent);
+    const headline = parsedResponse.titular_escandalo || "Un nuevo escándalo sacude la política.";
+
+    return headline;
+  } catch (error) {
+    console.error('Error calling Groq API for scandal headline:', error);
+    throw error;
+  }
+};
+
+exports.generateDevPlan = async (titulo_accion_elegida, descripcion_accion_elegida, tags_accion_elegida, quality_level, idioma) => {
+  await exports.ensureConfigsLoaded();
+  const config = exports.llmConfigs.plan_generator_dev;
+  if (!config) {
+    throw new Error('LLM configuration for plan_generator_dev not found.');
+  }
+
+  let humanPromptContent = config.human_prompt;
+  humanPromptContent = humanPromptContent.replace(/{{titulo_accion_elegida}}/g, titulo_accion_elegida || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{descripcion_accion_elegida}}/g, descripcion_accion_elegida || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{tags_accion_elegida}}/g, Array.isArray(tags_accion_elegida) ? tags_accion_elegida.join(', ') : tags_accion_elegida || 'N/A');
+  humanPromptContent = humanPromptContent.replace(/{{quality_level}}/g, quality_level || 'bueno');
+  humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+
+  const messages = [
+    { role: 'system', content: config.system_prompt || '' },
+    { role: 'user', content: humanPromptContent },
+  ];
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages,
+      model: config.model_name,
+      temperature: parseFloat(config.temperature),
+    });
+
+    const llmResponseContent = chatCompletion.choices[0]?.message?.content || '';
+    return llmResponseContent;
+  } catch (error) {
+    console.error('Error calling Groq API for dev plan generation:', error);
+    throw error;
+  }
+};
+
