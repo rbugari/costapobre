@@ -1,0 +1,63 @@
+/* Ocre Theme Styles */
+
+/* Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Indie+Flower&family=Luckiest+Guy&family=Permanent+Marker&family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+html.theme-ocre {
+  /* Corruptopolis Board Game Palette */
+  --color-main-background: #4A4238;
+  --color-panel-background: #8C7B5F;
+  --color-text-dark: #5C3A2D;
+  --color-text-light: #D4C08E;
+  --color-button-background: #D4C08E;
+  --color-button-border: #5C3A2D;
+  --color-rojo-alerta: #E74C3C;
+  --color-rojo-alerta-hover: #C0392B;
+
+  /* Body Styles */
+  transition: color 0.5s, background-color 0.5s;
+}
+
+/* Primary Button Styles */
+.theme-ocre .btn-primary {
+  background-color: var(--color-button-background);
+  color: var(--color-text-dark);
+  font-family: 'Indie Flower', cursive;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: 2px solid var(--color-button-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.theme-ocre .btn-primary:hover,
+.theme-ocre .btn-primary:focus {
+  background-color: var(--color-button-background);
+  transform: scale(1.05);
+  box-shadow: 0 0 5px var(--color-button-border);
+}
+
+.theme-ocre .btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Secondary Button Styles */
+.theme-ocre .btn-secondary {
+  background-color: var(--color-button-background);
+  color: var(--color-text-dark);
+  font-family: 'Indie Flower', cursive;
+  padding: 10px 20px;
+  border: 2px solid var(--color-button-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.theme-ocre .btn-secondary:hover,
+html.theme-ocre .btn-secondary:focus {
+  background-color: var(--color-button-background);
+  color: var(--color-text-dark);
+  box-shadow: 0 0 5px var(--color-button-border);
+}

@@ -1,63 +1,37 @@
 <template>
-  <div class="edit-profile-container">
-    <h2>Editar Perfil de Usuario</h2>
-    <form @submit.prevent="saveProfile">
-      <div class="form-group">
-        <label for="nickname">Nickname:</label>
-        <input type="text" id="nickname" v-model="userProfile.nickname" disabled />
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" id="email" v-model="userProfile.email" disabled />
-      </div>
-
-      <div class="form-group">
-        <label for="country_of_origin">País de Origen:</label>
-        <select id="country_of_origin" v-model="userProfile.country_of_origin">
+  <div class="auth-container">
+    <div class="auth-form">
+      <h2>Editar Perfil</h2>
+      <form @submit.prevent="saveProfile">
+        <input type="text" :value="userProfile.nickname" placeholder="Nickname" disabled />
+        <input type="email" :value="userProfile.email" placeholder="Email" disabled />
+        
+        <select v-model="userProfile.country_of_origin">
           <option value="">Seleccionar País</option>
           <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
         </select>
-      </div>
 
-      <div class="form-group">
-        <label for="age">Edad:</label>
-        <input type="number" id="age" v-model="userProfile.age" />
-      </div>
-
-      <div class="form-group">
-        <label for="political_ideology">Ideología Política:</label>
-        <input type="text" id="political_ideology" v-model="userProfile.political_ideology" />
-      </div>
-
-      <div class="form-group">
-        <label for="personal_profile">Perfil Personal:</label>
-        <textarea id="personal_profile" v-model="userProfile.personal_profile"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="avatar_upload">Subir Nuevo Avatar:</label>
-        <input type="file" id="avatar_upload" @change="handleFileChange" accept="image/jpeg, image/png, image/gif" />
-        <p class="upload-info">Formatos permitidos: JPEG, PNG, GIF. Tamaño máximo: 1MB.</p>
-        <div v-if="avatarPreview" class="avatar-preview">
-          <img :src="avatarPreview" alt="Previsualización del Avatar" />
+        <input type="number" v-model="userProfile.age" placeholder="Edad" />
+        <input type="text" v-model="userProfile.political_ideology" placeholder="Ideología Política" />
+        <textarea v-model="userProfile.personal_profile" placeholder="Perfil Personal"></textarea>
+        
+        <div class="form-group">
+          <label for="avatar-upload">Foto de Avatar:</label>
+          <input type="file" id="avatar-upload" @change="onFileSelected" accept="image/*" />
+          <p class="help-text">Formatos permitidos: JPG, PNG, GIF, WEBP. Tamaño máximo: 2MB.</p>
+          <div v-if="avatarPreview" class="avatar-preview-container">
+            <img :src="avatarPreview" alt="Avatar Preview" class="avatar-preview" />
+          </div>
         </div>
-        <button type="button" @click="uploadAvatar" :disabled="!selectedFile">Subir Avatar</button>
-      </div>
 
-      <div class="form-group">
-        <label for="selected_language">Idioma Preferido:</label>
-        <select id="selected_language" v-model="userProfile.selected_language">
+        <select v-model="userProfile.selected_language">
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit">Guardar Cambios</button>
-        <button type="button" @click="goBackToGame" class="back-button">Volver al Juego</button>
-      </div>
-    </form>
+        <button type="submit" class="btn-primary">Guardar Cambios</button>
+      </form>
+      <button @click="goBackToGame" class="btn-secondary" style="margin-top: 1rem;">Volver al Juego</button>
+    </div>
   </div>
 </template>
 
@@ -67,16 +41,7 @@ import api from '../api';
 export default {
   data() {
     return {
-      userProfile: {
-        nickname: '',
-        email: '',
-        country_of_origin: '',
-        age: null,
-        political_ideology: '',
-        personal_profile: '',
-        avatar_url: '',
-        selected_language: 'en',
-      },
+      userProfile: {},
       selectedFile: null,
       avatarPreview: null,
       countries: [
@@ -84,56 +49,14 @@ export default {
         'España', 'Guatemala', 'Honduras', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
         'Puerto Rico', 'República Dominicana', 'Uruguay', 'Venezuela',
         'Estados Unidos', 'Canadá', 'Reino Unido', 'Francia', 'Alemania', 'Italia', 'Brasil',
-        'Australia', 'China', 'India', 'Japón', 'Rusia', 'Sudáfrica', // Add more as needed
+        'Australia', 'China', 'India', 'Japón', 'Rusia', 'Sudáfrica',
       ],
     };
   },
   async mounted() {
     await this.fetchUserProfile();
-    if (this.userProfile.avatar_url) {
-      this.avatarPreview = `http://localhost:5000${this.userProfile.avatar_url}`;
-    }
   },
   methods: {
-    handleFileChange(event) {
-      console.log('Evento change disparado en input de archivo.');
-      const file = event.target.files[0];
-      if (file) {
-        this.selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.avatarPreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        this.selectedFile = null;
-        this.avatarPreview = null;
-      }
-    },
-    async uploadAvatar() {
-      if (!this.selectedFile) {
-        alert('Por favor, selecciona un archivo para subir.');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('avatar', this.selectedFile);
-
-      console.log('Intentando subir avatar...', this.selectedFile);
-      try {
-        const res = await api.put('/upload/avatar', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        this.userProfile.avatar_url = res.data.avatar_url;
-        alert('Avatar actualizado exitosamente!');
-        // No redirigimos, solo actualizamos la vista
-      } catch (err) {
-        console.error('Error uploading avatar:', err.response ? err.response.data : err.message);
-        alert(`Error al subir el avatar: ${err.response ? err.response.data.msg : err.message}`);
-      }
-    },
     async fetchUserProfile() {
       try {
         const res = await api.get('/auth/profile');
@@ -143,116 +66,108 @@ export default {
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
-        alert('Error al cargar el perfil de usuario.');
       }
     },
     async saveProfile() {
       try {
-        // Excluir avatar_url de esta actualización, ya que se maneja por separado
-        const profileToSave = { ...this.userProfile };
-        delete profileToSave.avatar_url;
+        if (this.selectedFile) {
+          const formData = new FormData();
+          formData.append('avatar', this.selectedFile);
+          const res = await api.put('/upload/avatar', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          this.userProfile.avatar_url = res.data.avatar_url;
+        }
 
-        await api.put('/auth/profile', profileToSave);
+        await api.put('/auth/profile', this.userProfile);
         alert('Perfil actualizado exitosamente!');
         this.$router.push('/game');
       } catch (err) {
         console.error('Error saving user profile:', err);
-        alert('Error al guardar el perfil de usuario.');
+        alert('Error al guardar el perfil.');
       }
+    },
+    onFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.avatarPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
     },
     goBackToGame() {
       this.$router.push('/game');
-    },
-    logClick() {
-      console.log('Input de archivo clickeado.');
-    },
-    logInput() {
-      console.log('Input de archivo ha recibido un evento input.');
     },
   },
 };
 </script>
 
 <style scoped>
-.edit-profile-container {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.auth-form {
+  background: var(--color-panel-background);
+  padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  background-color: var(--surface-color); /* Fondo oscuro */
-  color: var(--text-color); /* Texto claro */
-  text-align: left;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="number"],
-.form-group textarea,
-.form-group select {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   width: 100%;
-  padding: 8px;
-  border: 1px solid #444; /* Borde oscuro */
-  border-radius: 4px;
+  max-width: 500px;
+  border: 2px solid var(--color-button-border);
+}
+
+.auth-form h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  color: var(--color-text-dark);
+  margin-bottom: 1.5rem;
+}
+
+.auth-form input,
+.auth-form textarea,
+.auth-form select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 2px solid var(--color-button-border);
+  border-radius: 8px;
+  background: var(--color-panel-background);
+  color: var(--color-text-dark);
   box-sizing: border-box;
-  background-color: #1a1a1a; /* Fondo de input oscuro */
-  color: var(--text-color); /* Texto de input claro */
 }
 
-.form-group textarea {
-  resize: vertical;
+.auth-form input:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.auth-form textarea {
   min-height: 80px;
+  resize: vertical;
 }
 
-.form-actions button {
-  background-color: var(--primary-color); /* Botón primario */
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-}
-
-.form-actions button:hover {
-  background-color: #4a1da8; /* Hover del botón primario */
-}
-
-.upload-info {
-  font-size: 0.8em;
-  color: #aaa;
-  margin-top: 5px;
-}
-
-.avatar-preview {
+.avatar-preview-container {
   margin-top: 10px;
   text-align: center;
 }
 
-.avatar-preview img {
+.avatar-preview {
   width: 100px;
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--noir-retro-primary-accent);
 }
 
-.back-button {
-  background-color: #6c757d; /* Color gris para el botón de volver */
-  margin-left: 10px;
-}
-
-.back-button:hover {
-  background-color: #5a6268;
+.help-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
 }
 </style>

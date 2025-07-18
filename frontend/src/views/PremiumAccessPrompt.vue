@@ -2,7 +2,7 @@
   <div class="premium-access-container">
     <div class="premium-access-card">
       <h2>¡Acceso Premium Requerido!</h2>
-      <p>Has completado todos los niveles gratuitos de Corruptia.</p>
+      <p>Has completado todos los niveles gratuitos de Corruptopolis.</p>
       <p>Para continuar tu ascenso en la política y desbloquear nuevos desafíos, necesitas adquirir el Pase Premium.</p>
       <button @click="purchasePremium">Adquirir Pase Premium (2€)</button>
       <p class="small-text">Al hacer clic, se simulará una compra y se activará tu acceso premium.</p>

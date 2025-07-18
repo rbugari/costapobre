@@ -17,7 +17,7 @@ router.post('/progress', auth, gameController.saveProgress);
 // @desc    Reduce BE by spending INF
 // @access  Private
 router.post('/reduce-scandal', auth, gameController.reduceScandal);
-router.get('/config', auth, gameController.getGameConfig);
+router.get('/config', gameController.getGameConfig);
 
 // @route   POST api/game/resolve-scandal
 // @desc    Resolve scandal event

@@ -1,15 +1,14 @@
 <template>
   <div class="action-cards-container">
-    <h3>Elige una acción para: {{ type.name }}</h3>
     <div v-if="isLoading">Cargando acciones...</div>
     <div v-if="error">{{ error }}</div>
-    <div class="cards-grid">
+    <transition-group name="card-fade-slide" tag="div" class="cards-grid">
       <div v-for="card in cards" :key="card.titulo" class="card" @click="selectCard(card)">
         <h4>{{ card.titulo }}</h4>
         <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
         <p>{{ card.descripcion }}</p>
       </div>
-    </div>
+    </transition-group>
   </div>
 </template>
 
@@ -87,21 +86,56 @@ export default {
   margin-top: 20px;
 }
 .card {
-  background: #313842;
-  padding: 16px;
+  background: var(--color-button-background);
+  padding: 0;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid var(--color-button-border);
+  box-shadow: 4px 4px 0px var(--color-button-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Added transition */
 }
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-10px) scale(1.05); /* Move up and scale */
+  box-shadow: 8px 8px 15px rgba(0,0,0,0.3); /* Enhance shadow */
 }
 .card-image {
-  width: 80%;
-  height: auto;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  width: 100%;
+  height: 150px;
   object-fit: cover;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+.card h4 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: normal;
+  color: var(--color-text-dark);
+  margin: 10px 10px 5px 10px;
+}
+.card p {
+  font-family: 'Roboto', sans-serif;
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--noir-retro-pure-black);
+  margin: 0 10px 10px 10px;
+}
+
+.card-fade-slide-enter-active,
+.card-fade-slide-leave-active {
+  transition: all 0.5s ease;
+}
+
+.card-fade-slide-enter-from,
+.card-fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* ensure leaving items are taken out of layout flow so that moving
+   animations can be calculated correctly. */
+.card-fade-slide-leave-active {
+  position: absolute;
 }
 </style>

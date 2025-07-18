@@ -1,12 +1,14 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
-import GameLayout from '../components/GameLayout.vue'
-import Game from '../views/Game.vue'
-import History from '../views/History.vue'
-import Help from '../views/Help.vue'
-import EditProfile from '../views/EditProfile.vue'
-import PremiumAccessPrompt from '../views/PremiumAccessPrompt.vue' // Importar el nuevo componente
+import { createRouter, createWebHistory } from 'vue-router';
+import Login from '../views/Login.vue';
+import Register from '../views/Register.vue';
+import VerifyEmail from '../views/VerifyEmail.vue';
+import AcceptTerms from '../views/AcceptTerms.vue'; // Importar el nuevo componente
+import GameLayout from '../components/GameLayout.vue';
+import Game from '../views/Game.vue';
+import History from '../views/History.vue';
+import Help from '../views/Help.vue';
+import EditProfile from '../views/EditProfile.vue';
+import PremiumAccessPrompt from '../views/PremiumAccessPrompt.vue';
 
 const routes = [
   {
@@ -20,66 +22,61 @@ const routes = [
     component: Register
   },
   {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: VerifyEmail
+  },
+  {
+    path: '/accept-terms',
+    name: 'AcceptTerms',
+    component: AcceptTerms,
+  },
+  {
     path: '/premium-access',
     name: 'PremiumAccess',
     component: PremiumAccessPrompt
   },
   {
-    path: '/', // Ruta base para las vistas autenticadas
+    path: '/',
     component: GameLayout,
     meta: { requiresAuth: true },
     children: [
-      {
-        path: '', // Redirige a /game cuando se accede a / (si está autenticado)
-        redirect: '/game'
-      },
-      {
-        path: 'game',
-        name: 'Game',
-        component: Game,
-      },
-      {
-        path: 'history',
-        name: 'History',
-        component: History,
-      },
-      {
-        path: 'help',
-        name: 'Help',
-        component: Help,
-      },
-      {
-        path: 'edit-profile',
-        name: 'EditProfile',
-        component: EditProfile,
-      },
+      { path: '', redirect: '/game' },
+      { path: 'game', name: 'Game', component: Game },
+      { path: 'history', name: 'History', component: History },
+      { path: 'help', name: 'Help', component: Help },
+      { path: 'edit-profile', name: 'EditProfile', component: EditProfile },
     ],
   },
-  // Ruta catch-all para redirigir a login si la ruta no existe y no está autenticado
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/login'
-  }
-]
+  { path: '/:pathMatch(.*)*', redirect: '/login' }
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
-router.beforeEach((to, from, next) => {
-  const loggedIn = localStorage.getItem('accessToken') // Cambiado de 'token' a 'accessToken'
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+router.beforeEach(async (to, from, next) => {
+  const loggedIn = localStorage.getItem('accessToken');
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-  if (requiresAuth && !loggedIn) {
-    next('/login')
-  } else if (!requiresAuth && loggedIn && (to.path === '/login' || to.path === '/register' || to.path === '/')) {
-    // Si está logueado y trata de ir a login/register o a la raíz no autenticada, redirige a /game
-    next('/game')
-  } else {
-    next()
+  // Allow access to Login, Register, VerifyEmail, AcceptTerms regardless of auth status
+  if (to.name === 'Login' || to.name === 'Register' || to.name === 'VerifyEmail' || to.name === 'AcceptTerms') {
+    // If user is logged in and tries to access Login or Register, redirect to game
+    if ((to.name === 'Login' || to.name === 'Register') && loggedIn) {
+      next('/game');
+    } else {
+      next(); // Allow access to these specific routes
+    }
   }
-})
+  // For any other route that requires authentication
+  else if (requiresAuth && !loggedIn) {
+    next('/login'); // Redirect to login if not authenticated
+  }
+  // For any other route that does not require authentication, or if authenticated
+  else {
+    next();
+  }
+});
 
-export default router
-
+export default router;

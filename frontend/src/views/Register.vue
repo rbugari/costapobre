@@ -30,7 +30,7 @@
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
-        <button type="submit">Registrarse</button>
+        <button type="submit" class="btn-primary">Registrarse</button>
       </form>
       <p class="auth-switch">
         ¿Ya tienes una cuenta? <router-link to="/">Inicia Sesión</router-link>
@@ -91,12 +91,11 @@ export default {
             'Content-Type': 'multipart/form-data',
           },
         });
-        localStorage.setItem('accessToken', res.data.accessToken);
-        localStorage.setItem('refreshToken', res.data.refreshToken);
-        alert('¡Registro exitoso! Por favor, inicia sesión.');
-        this.$router.push('/');
+        alert(res.data.msg); // 'Registro exitoso. Por favor, verifica tu email...'
+        this.$router.push({ name: 'VerifyEmail', query: { email: this.email } });
       } catch (err) {
-        alert(err.response.data.msg);
+        const errorMessage = err.response?.data?.msg || 'Ha ocurrido un error inesperado durante el registro.';
+        alert(errorMessage);
       }
     },
     onFileSelected(event) {
@@ -146,15 +145,18 @@ export default {
 }
 
 .auth-form {
-  background: var(--surface-color);
+  background: var(--color-panel-background); /* Changed to new palette variable */
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 8px; /* Changed to match new aesthetic */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 500px;
+  border: 2px solid var(--color-button-border); /* Changed to new palette variable */
 }
 
 .auth-form h2 {
+  font-family: 'Bebas Neue', sans-serif; /* Updated for consistent title font */
+  color: var(--color-text-dark); /* Changed to new palette variable */
   margin-bottom: 1.5rem;
 }
 
@@ -164,10 +166,10 @@ export default {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #1a1a1a;
-  color: var(--text-color);
+  border: 2px solid var(--color-button-border); /* Changed to new palette variable */
+  border-radius: 8px; /* Changed to match new aesthetic */
+  background: var(--color-panel-background); /* Changed to new palette variable */
+  color: var(--color-text-dark); /* Changed to new palette variable */
   box-sizing: border-box;
 }
 
@@ -177,28 +179,19 @@ export default {
 }
 
 button {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  background: var(--primary-color);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 1rem;
-}
-
-button:hover {
-  background-color: #4a1da8;
+  /* Removed specific button styles, now uses btn-primary */
 }
 
 .auth-switch {
   margin-top: 1.5rem;
   font-size: 0.9rem;
+  font-family: 'Roboto', sans-serif; /* Updated for consistent body font */
+  color: var(--color-text-dark); /* Changed to new palette variable */
 }
 
 .auth-switch a {
   font-weight: bold;
+  font-family: 'Bebas Neue', sans-serif;
+  color: var(--noir-retro-pure-black);
 }
 </style>

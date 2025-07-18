@@ -23,6 +23,7 @@ const sttRoutes = require('./routes/stt');
 const monetizationRoutes = require('./routes/monetization');
 
 const { loadGameConfig } = require('./config/gameConfig');
+const aiService = require('./services/aiService');
 
 const app = express();
 
@@ -48,8 +49,9 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    await sequelize.sync();
+    
     await loadGameConfig();
+    await aiService.initialize();
     app.listen(PORT, () => console.log(`Servidor backend listo para operar en el puerto ${PORT}`));
   } catch (error) {
     console.error('Error al iniciar el servidor:', error);
@@ -58,4 +60,3 @@ const startServer = async () => {
 };
 
 startServer();
-

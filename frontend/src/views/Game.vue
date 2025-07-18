@@ -1,119 +1,72 @@
 <template>
   <div class="game-container">
+    <!-- Panel de Información del Juego (Rediseñado) -->
     <div v-if="gameState" class="game-info-panel">
-      <div class="level-details">
-        <h3>
-          Cargo Actual:
-          {{ gameState.levelInfo ? gameState.levelInfo.title : 'Cargando...' }}
-        </h3>
+      <!-- 50% Izquierda: Info del Personaje -->
+      <div class="character-info-container">
         <img
           v-if="gameState.levelInfo && gameState.levelInfo.character_image_url"
           :src="getCharacterImageUrl(gameState.levelInfo.character_image_url)"
           alt="Character Image"
           class="character-image"
         />
-        <p v-if="gameState.levelInfo">
-          {{ gameState.levelInfo.description_visual }}
-        </p>
+        <div class="character-text">
+          <h3 class="character-title">{{ gameState.levelInfo ? gameState.levelInfo.title : 'Cargando...' }}</h3>
+          <p class="character-description" v-if="gameState.levelInfo">{{ gameState.levelInfo.description_visual }}</p>
+        </div>
       </div>
-      <div class="resource-details">
-        <p>
-          Nivel: <strong>{{ gameState.level }} / {{ gameState.maxLevel }}</strong>
-        </p>
-        <p>
-          Puntos de Corrupción (PC): <strong>{{ gameState.pc }}</strong>
-          <span v-if="gameState.levelInfo">
-            / {{ gameState.levelInfo.pc_required_for_ascension }}
-          </span>
-        </p>
-        <p>
-          Influencia (INF): <strong>{{ gameState.inf }}</strong>
-          <span>
-            / 100
-          </span>
-        </p>
-        <p>
-          Barra de Escándalo (BE): <strong>{{ gameState.be }}</strong>
-        </p>
+
+      <!-- 50% Derecha: Recursos -->
+      <div class="resources-container">
+        <div class="resource-item">
+          <div class="resource-label">
+            <span class="resource-title">Puntos de Corrupción (PC)</span>
+            <span class="resource-value">{{ gameState.pc }} / {{ gameState.levelInfo.pc_required_for_ascension }}</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill pc-bar" :style="{ width: (gameState.pc / gameState.levelInfo.pc_required_for_ascension * 100) + '%' }"></div>
+          </div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-label">
+            <span class="resource-title">Influencia (INF)</span>
+            <span class="resource-value">{{ gameState.inf }} / 100</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill inf-bar" :style="{ width: gameState.inf + '%' }"></div>
+          </div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-label">
+            <span class="resource-title">Barra de Escándalo (BE)</span>
+            <span class="resource-value">{{ gameState.be }} / 100</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill be-bar" :class="{ 'be-warning': gameState.be > 50 && gameState.be <= 80, 'be-danger': gameState.be > 80 }" :style="{ width: gameState.be + '%' }"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Área de Gestión de Escándalo -->
+    <!-- El resto del template original -->
     <div v-if="gameState && gameState.be > 85 && !showScandalEvent" class="scandal-area">
-      <div class="scandal-alert">
-        ¡Alerta! Tu nivel de escándalo es peligrosamente alto.
-      </div>
+      <div class="scandal-alert">¡Alerta! Tu nivel de escándalo es peligrosamente alto.</div>
       <div class="scandal-actions">
-        <input
-          type="number"
-          v-model.number="infToSpend"
-          placeholder="INF a gastar"
-          min="1"
-          :max="gameState.inf"
-        />
-        <button @click="reduceScandal" :disabled="!infToSpend || infToSpend <= 0">
-          Reducir Escándalo
-        </button>
+        <input type="number" v-model.number="infToSpend" placeholder="INF a gastar" min="1" :max="gameState.inf" />
+        <button @click="reduceScandal" :disabled="!infToSpend || infToSpend <= 0" class="btn-primary">Reducir Escándalo</button>
       </div>
     </div>
-
-    <!-- Monetization Prompts -->
-    <div v-if="showPremiumPrompt" class="monetization-prompt">
-      <h3>¡Desbloquea el Juego Completo!</h3>
-      <p>Para acceder a los niveles superiores y la experiencia completa de Corruptia, necesitas adquirir el Pase Premium.</p>
-      <button @click="purchasePremium">Comprar Pase Premium (2€)</button>
-    </div>
-
-    <div v-if="showScandalRescuePrompt" class="monetization-prompt">
-      <h3>¡Rescata tu Carrera Política!</h3>
-      <p>Tu nivel de escándalo es crítico. Paga para reducirlo y evitar consecuencias graves.</p>
-      <button @click="purchaseScandalRescue">Pagar Rescate (1€)</button>
-    </div>
-
-    <div v-if="showGameOver" class="monetization-prompt game-over">
-      <h3>¡GAME OVER!</h3>
-      <p>Tu escándalo ha llegado a un nivel insostenible y no tienes el desbloqueo completo. Tu carrera política ha terminado.</p>
-      <p>Para continuar jugando y tener inmunidad a futuros GAME OVER por escándalo, adquiere el Desbloqueo Completo.</p>
-      <!-- Optionally, add a button to purchase full unlock if not already offered -->
-    </div>
-
-    <div v-if="showAdLimitWarning" class="monetization-prompt ad-limit-warning">
-      <h3>Límite de Anuncios Alcanzado</h3>
-      <p>Como usuario invitado, has alcanzado el límite de anuncios recompensados. No podrás ver más anuncios por ahora.</p>
-    </div>
-
-    <!-- Área Operativa / Selección -->
     <div class="game-operational-area" v-if="currentScreen === 'game' && gameState">
       <div v-if="corruptionTypes.length > 0 && !selectedCorruptionType">
-        <h3>Tipos de Corrupción Disponibles:</h3>
-        <div class="corruption-types-list">
-          <span
-            v-for="(type, index) in corruptionTypes"
-            :key="index"
-            class="corruption-type"
-          >
-            {{ type.name }}
-          </span>
-        </div>
-        <button @click="spinRoulette" class="spin-button">Girar Ruleta</button>
+        <CorruptionWheel :corruptionTypes="corruptionTypes" @type-selected="handleCorruptionTypeSelected" />
       </div>
       <div v-else-if="selectedCorruptionType && !selectedCard">
-        <h4>Tipo de Corrupción Seleccionado:</h4>
-        <p class="selected-type-display">{{ selectedCorruptionType.name }}</p>
-        <!-- Aquí van las tarjetas de acciones según el tipo de corrupción seleccionado -->
-        <ActionCards
-          :type="selectedCorruptionType"
-          @selectCard="handleSelectCard"
-        />
+        <h3 class="selected-type-display">{{ selectedCorruptionType.name }}</h3>
+        <ActionCards :type="selectedCorruptionType" @selectCard="handleSelectCard" />
       </div>
     </div>
-
-    <!-- Evaluación de la LLM -->
     <div class="llm-evaluation-area" v-if="currentScreen === 'evaluation' && llmEvaluation">
-      <EvaluationView
-        :evaluation="llmEvaluation"
-        @closeEvaluation="closeEvaluation"
-      />
+      <EvaluationView :evaluation="llmEvaluation" @closeEvaluation="closeEvaluation" />
 
       <div v-if="isDevMode && devCalculationDetails" class="dev-calculation-box">
         <h3>Detalles de Cálculo (Dev)</h3>
@@ -125,50 +78,30 @@
         <p><strong>Ganancia PC (final redondeada):</strong> {{ devCalculationDetails.final_pc_gain }}</p>
       </div>
     </div>
-
-    <!-- Tarjeta seleccionada para jugar -->
     <div class="card-play-area" v-if="currentScreen === 'game' && selectedCard && gameConfig">
-      <PlayCardView
-        :card="selectedCard"
-        @playCard="handlePlayCard"
-        @cancel="cancelPlayCard"
-        :gameConfig="gameConfig"
-        :generatedPlan="generatedDevPlan"
-      />
+      <PlayCardView :card="selectedCard" @playCard="handlePlayCard" @cancel="cancelPlayCard" :gameConfig="gameConfig" :generatedPlan="generatedDevPlan" />
     </div>
-
-    <!-- Evento de Escándalo -->
-    <ScandalEvent
-      v-if="currentScreen === 'scandal' && showScandalEvent"
-      :headline="scandalHeadline"
-      @scandal-resolved="handleScandalResolved"
-    />
-
-    <!-- Pantalla de GAME OVER -->
+    <ScandalEvent v-if="currentScreen === 'scandal' && showScandalEvent" :headline="scandalHeadline" :user-info="gameState.userInfo" @scandal-resolved="handleScandalResolved" />
     <div v-if="currentScreen === 'gameOver' && showGameOver" class="monetization-prompt game-over">
       <h3>¡GAME OVER!</h3>
       <p>Tu escándalo ha llegado a un nivel insostenible y tu carrera política ha terminado.</p>
-      <button @click="$router.push('/login')">Volver al Inicio</button>
+      <button @click="$router.push('/login')" class="btn-primary">Volver al Inicio</button>
     </div>
-
-    <!-- Pantalla de Acceso Premium -->
     <div v-if="currentScreen === 'premiumAccess'" class="monetization-prompt">
       <h3>¡Acceso Premium Requerido!</h3>
       <p>Has completado los niveles gratuitos. Adquiere el Pase Premium para continuar.</p>
-      <button @click="$router.push('/premium-access')">Ir a la Tienda Premium</button>
+      <button @click="$router.push('/premium-access')" class="btn-primary">Ir a la Tienda Premium</button>
     </div>
-
-    <!-- Developer Tools -->
     <div v-if="isDevMode" class="dev-tools">
       <h3>Herramientas de Desarrollo</h3>
-      <button @click="addPc(1000)">Añadir 1000 PC</button>
-      <button @click="addInf(100)">Añadir 100 INF</button>
-      <button @click="triggerScandal">Forzar Escándalo</button>
+      <button @click="addPc()" class="btn-dev-tool">Añadir 10% PC/INF</button>
+      <button @click="addInf()" class="btn-dev-tool">Añadir 50% PC/INF</button>
+      <button @click="triggerScandal" class="btn-dev-tool">Forzar Escándalo</button>
       <select v-model="selectedLevel" @change="changeLevel">
         <option disabled value="">Seleccionar Nivel</option>
         <option v-for="n in gameState.maxLevel" :key="n" :value="n">Nivel {{ n }}</option>
       </select>
-      <button @click="resetProgress">Resetear Progreso</button>
+      <button @click="resetProgress" class="btn-dev-tool">Resetear Progreso</button>
 
       <div v-if="selectedCard">
         <select v-model="devPlanQuality">
@@ -177,10 +110,9 @@
           <option value="regular">Regular</option>
           <option value="malo">Malo</option>
         </select>
-        <button @click="generateDevPlan">Generar Plan (Dev)</button>
+        <button @click="generateDevPlan" class="btn-dev-tool">Generar Plan (Dev)</button>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -188,8 +120,9 @@
 import ActionCards from '../components/ActionCards.vue';
 import EvaluationView from '../components/EvaluationView.vue';
 import PlayCardView from '../components/PlayCardView.vue';
-import ScandalEvent from '../components/ScandalEvent.vue'; // Importar el nuevo componente
-import api, { monetizationApi } from '../api'; // Importar la instancia de axios configurada y la API de monetización
+import ScandalEvent from '../components/ScandalEvent.vue';
+import CorruptionWheel from '../components/CorruptionWheel.vue';
+import api from '../api';
 
 export default {
   name: 'Game',
@@ -197,7 +130,8 @@ export default {
     ActionCards,
     EvaluationView,
     PlayCardView,
-    ScandalEvent // Registrar el nuevo componente
+    ScandalEvent,
+    CorruptionWheel
   },
   data() {
     return {
@@ -216,90 +150,71 @@ export default {
       showScandalRescuePrompt: false,
       showGameOver: false,
       showAdLimitWarning: false,
-      showScandalEvent: false, // Nuevo estado para controlar la visibilidad del evento de escándalo
-      scandalHeadline: '', // Nuevo estado para el titular del escándalo
-      currentScreen: 'game', // Controla qué pantalla se muestra: 'game', 'evaluation', 'scandal', 'gameOver', 'premiumAccess'
-      isDevMode: false, // Para activar herramientas de desarrollo
+      showScandalEvent: false,
+      scandalHeadline: '',
+      currentScreen: 'game',
+      isDevMode: false, // Explicitly initialize to false
       selectedLevel: '',
-      devPlanQuality: 'bueno', // Calidad por defecto para el plan generado en dev
-      generatedDevPlan: '', // Para almacenar el plan generado por el LLM en modo dev
-      devCalculationDetails: null, // Para mostrar el paso a paso de la fórmula en modo dev
+      devPlanQuality: 'bueno',
+      generatedDevPlan: '',
+      devCalculationDetails: null,
     };
   },
   methods: {
     getCharacterImageUrl(relativePath) {
-      // Asume que el backend está en http://localhost:5000
-      // y sirve imágenes estáticas desde su raíz.
       return `http://localhost:5000${relativePath}`;
     },
-    async spinRoulette() {
-      if (this.corruptionTypes.length === 0) return;
-      const randomIndex = Math.floor(Math.random() * this.corruptionTypes.length);
-      this.selectedCorruptionType = this.corruptionTypes[randomIndex];
+    handleCorruptionTypeSelected(selectedType) {
+      this.selectedCorruptionType = selectedType;
     },
-    
     handleSelectCard(card) {
       this.selectedCard = card;
+      console.log('Game.vue: selectedCard updated to:', this.selectedCard);
     },
     async handlePlayCard(result) {
-      console.log('Game.vue: handlePlayCard - Raw result from backend:', result); // Nuevo log
-      const actionTitle = this.selectedCard ? this.selectedCard.titulo : 'N/A'; // Capture title before clearing
+      const actionTitle = this.selectedCard ? this.selectedCard.titulo : 'N/A';
       this.selectedCard = null;
-
-      // Manejar GAME OVER
       if (result.evaluation.gameOver) {
-        this.showGameOver = true; // Mantener esta bandera para el prompt de monetización
-        this.gameState = null; // Limpiar gameState
-        this.llmEvaluation = null; // Limpiar evaluación
-        this.showScandalEvent = false; // Asegurarse de que el modal de escándalo no se muestre
+        this.showGameOver = true;
+        this.gameState = null;
+        this.llmEvaluation = null;
+        this.showScandalEvent = false;
         this.currentScreen = 'gameOver';
-        return; // Detener la ejecución
+        return;
       }
-
-      // Manejar redirección a pantalla premium
       if (result.evaluation.requiresPremiumAccess) {
-        console.log('Game.vue: handlePlayCard - Acceso premium requerido. Redirigiendo...');
         this.currentScreen = 'premiumAccess';
         this.$router.push('/premium-access');
-        return; // Detener la ejecución
+        return;
       }
-
-      // Manejar evento de escándalo
       if (result.evaluation.scandal_triggered) {
         this.scandalHeadline = result.evaluation.scandal_headline;
-        this.showScandalEvent = true; // Mantener esta bandera para el componente
-        this.llmEvaluation = null; // Limpiar evaluación para que no se muestre la vista de evaluación
+        this.showScandalEvent = true;
+        this.llmEvaluation = null;
         this.currentScreen = 'scandal';
-        return; // Detener la ejecución
+        return;
       }
-
-      // Si no hay GAME OVER, premium requerido o escándalo, mostrar la evaluación normal
-      this.llmEvaluation = result.evaluation; // Asignar la evaluación completa
-      this.gameState = result.evaluation.updated_game_state; // Actualizar el estado del juego
-      this.devCalculationDetails = result.evaluation.dev_calculation_details; // Store dev calculation details
+      this.llmEvaluation = result.evaluation;
+      this.gameState = result.evaluation.updated_game_state;
+      this.devCalculationDetails = result.evaluation.dev_calculation_details;
       this.currentScreen = 'evaluation';
-
-      // Check for scandal rescue prompt after evaluation (si no se disparó un escándalo mayor)
       if (result.evaluation.requiresRescue) {
         this.showScandalRescuePrompt = true;
       } else {
         this.showScandalRescuePrompt = false;
       }
-
-      // Guardar la interacción en el historial
       try {
         if (this.gameState) {
           await api.post('/history/add', {
             level: this.gameState.level,
             action_title: actionTitle,
-            narrated_plan_text: result.narrated_plan_text, // CORREGIDO: Obtener el plan narrado directamente
+            narrated_plan_text: result.narrated_plan_text,
             llm_evaluation_json: result.evaluation.llm_evaluation_json,
             llm_advice_json: result.evaluation.llm_advice_json,
           });
-          console.log('Interacción LLM guardada en el historial.');
         }
       } catch (historyErr) {
-        console.error('Error al guardar la interacción LLM en el historial:', historyErr);
+        console.error('Error saving LLM interaction to history:', historyErr);
       }
     },
     cancelPlayCard() {
@@ -308,81 +223,16 @@ export default {
     closeEvaluation() {
       this.llmEvaluation = null;
       this.selectedCorruptionType = null;
-      this.currentScreen = 'game'; // Volver a la pantalla de juego normal
-      this.loadCorruptionTypes(); // Recargar los tipos de corrupción para el siguiente turno
+      this.currentScreen = 'game';
+      this.generatedDevPlan = ''; // Reset the generated plan
+      this.loadCorruptionTypes();
     },
-    // Nuevo método para manejar la resolución del escándalo desde ScandalEvent.vue
     handleScandalResolved(updatedGameState) {
       this.gameState = updatedGameState;
-      this.showScandalEvent = false; // Ocultar el evento de escándalo
-      this.llmEvaluation = null; // Limpiar la evaluación para permitir nuevas acciones
-      this.selectedCorruptionType = null; // Limpiar el tipo de corrupción seleccionado
-      this.currentScreen = 'game'; // Volver a la pantalla de juego normal
-    },
-    async addPc(amount) {
-      if (this.gameState) {
-        this.gameState.pc += amount;
-        await this.saveProgress();
-      }
-    },
-    async addInf(amount) {
-      if (this.gameState) {
-        this.gameState.inf = Math.min(100, this.gameState.inf + amount);
-        await this.saveProgress();
-      }
-    },
-    async saveProgress() {
-      if (!this.gameState) return;
-      try {
-        const response = await api.post('/game/progress', this.gameState);
-        this.gameState = response.data; // Update local state with the response from the server
-      } catch (error) {
-        console.error('Error saving game state:', error);
-      }
-    },
-    async triggerScandal() {
-      if (this.gameState) {
-        this.gameState.be = 90;
-        await this.saveProgress();
-        this.loadGameState(); // Recargar el estado para que el backend procese el escándalo
-      }
-    },
-    async changeLevel() {
-      if (this.gameState && this.selectedLevel) {
-        this.gameState.level = this.selectedLevel;
-        await this.saveProgress();
-        this.loadGameState();
-      }
-    },
-    async resetProgress() {
-      if (this.gameState) {
-        this.gameState.level = 1;
-        this.gameState.pc = 0;
-        this.gameState.inf = 0;
-        this.gameState.be = 0;
-        await this.saveProgress();
-        this.loadGameState();
-      }
-    },
-    async generateDevPlan() {
-      if (!this.selectedCard) {
-        alert('Por favor, selecciona una carta primero.');
-        return;
-      }
-      try {
-        const response = await api.post('/ai/generate-dev-plan', {
-          titulo_accion_elegida: this.selectedCard.titulo,
-          descripcion_accion_elegida: this.selectedCard.descripcion,
-          tags_accion_elegida: this.selectedCard.tags_obligatorios,
-          quality_level: this.devPlanQuality,
-          idioma: this.gameState.userInfo.selected_language || 'es',
-        });
-        this.generatedDevPlan = response.data.plan;
-        alert('Plan generado con éxito!');
-      } catch (error) {
-        console.error('Error generating dev plan:', error);
-        alert(`Error al generar plan de desarrollo: ${error.response ? error.response.data.msg : error.message}`);
-      }
+      this.showScandalEvent = false;
+      this.llmEvaluation = null;
+      this.selectedCorruptionType = null;
+      this.currentScreen = 'game';
     },
     async loadGameState() {
       this.isLoadingGameState = true;
@@ -391,41 +241,10 @@ export default {
         const response = await api.get('/game/progress');
         this.gameState = response.data;
         this.isDevMode = this.gameState.gameMode === 'desarrollo';
-
-        // Verificar si se disparó un escándalo al cargar el juego
+        console.log('Game Mode received from backend:', this.gameState.gameMode);
         if (response.data.scandal_triggered) {
           this.scandalHeadline = response.data.scandal_headline;
           this.showScandalEvent = true;
-        } else {
-          this.showScandalEvent = false;
-        }
-
-        // Handle monetization flags
-        if (this.gameState.requiresPremium && !this.gameState.userInfo.tipo_invitado) {
-          this.showPremiumPrompt = true;
-        } else {
-          this.showPremiumPrompt = false;
-        }
-
-        // Check for GAME OVER condition (if backend sends a specific status or message)
-        if (response.status === 402 && response.data.msg && response.data.msg.includes('GAME OVER')) {
-          this.showGameOver = true;
-        } else {
-          this.showGameOver = false;
-        }
-
-        // Check for scandal rescue prompt
-        if (response.status === 402 && response.data.requiresRescue) {
-          this.showScandalRescuePrompt = true;
-        } else {
-          this.showScandalRescuePrompt = false;
-        }
-
-        // Check for guest user ad limit
-        if (this.gameState.userInfo.tipo_invitado && this.gameState.userInfo.anuncios_vistos >= this.gameConfig.INVITADO_MAX_ANUNCIOS) {
-          this.showAdLimitWarning = true;
-        } else {
-          this.showAdLimitWarning = false;
         }
       } catch (error) {
         console.error('Error loading game state:', error);
@@ -444,7 +263,6 @@ export default {
           idioma: this.gameState.userInfo.selected_language || 'es',
         });
         this.corruptionTypes = response.data.map(name => ({ name }));
-        console.log('Frontend: Tipos de corrupción recibidos:', this.corruptionTypes.length);
       } catch (error) {
         console.error('Error loading corruption types:', error);
         this.errorCorruptionTypes = 'Failed to load corruption types.';
@@ -462,7 +280,7 @@ export default {
           inf_to_spend: this.infToSpend,
         });
         this.gameState = response.data;
-        this.infToSpend = 1; // Reset input
+        this.infToSpend = 1;
         alert(`Has gastado ${this.infToSpend} de Influencia para reducir tu Escándalo.`);
       } catch (error) {
         console.error('Error reducing scandal:', error);
@@ -477,228 +295,209 @@ export default {
         console.error('Error loading game config:', error);
       }
     },
-    async purchasePremium() {
+    async generateDevPlan() {
+      console.log('generateDevPlan called. Quality:', this.devPlanQuality);
+      if (!this.selectedCard) {
+        console.warn('No card selected for dev plan generation.');
+        return;
+      }
       try {
-        const response = await monetizationApi.simulatePremiumPurchase();
-        this.gameState.userInfo.premium = response.data.user.premium;
-        this.gameState.userInfo.pagoTotal = response.data.user.pagoTotal;
-        this.showPremiumPrompt = false;
-        alert('Pase Premium adquirido con éxito!');
+        const response = await api.post('/ai/generate-dev-plan', {
+          titulo_accion_elegida: this.selectedCard.titulo,
+          descripcion_accion_elegida: this.selectedCard.descripcion,
+          tags_accion_elegida: this.selectedCard.tags_obligatorios,
+          quality_level: this.devPlanQuality,
+          idioma: this.gameState.userInfo.selected_language || 'es',
+        });
+        this.generatedDevPlan = response.data.plan;
+        console.log('LLM Generated Dev Plan:', this.generatedDevPlan);
       } catch (error) {
-        console.error('Error purchasing premium:', error);
-        alert(`Error al adquirir el Pase Premium: ${error.response ? error.response.data.message : error.message}`);
+        console.error('Error generating dev plan:', error);
+        alert('Error al generar el plan de desarrollo.');
       }
     },
-    async purchaseScandalRescue() {
-      try {
-        const response = await monetizationApi.simulateScandalRescue();
-        this.gameState.userInfo.rescatePago = response.data.user.rescatePago;
-        this.gameState.userInfo.pagoTotal = response.data.user.pagoTotal;
-        this.showScandalRescuePrompt = false;
-        alert('Rescate de escándalo adquirido con éxito!');
-      } catch (error) {
-        console.error('Error purchasing scandal rescue:', error);
-        alert(`Error al adquirir el rescate de escándalo: ${error.response ? error.response.data.message : error.message}`);
+    // Placeholder methods for development tools
+    addPc() {
+      if (!this.gameState) {
+        console.warn('gameState is null. Cannot add PC/INF.');
+        return;
       }
+      const pcIncrease = Math.round(this.gameState.pc * 0.10);
+      const infIncrease = Math.round(this.gameState.inf * 0.10);
+      this.gameState.pc += pcIncrease;
+      this.gameState.inf += infIncrease;
+      console.log(`Added ${pcIncrease} PC and ${infIncrease} INF (10%). New PC: ${this.gameState.pc}, New INF: ${this.gameState.inf}`);
+    },
+    addInf() {
+      if (!this.gameState) {
+        console.warn('gameState is null. Cannot add PC/INF.');
+        return;
+      }
+      const pcIncrease = Math.round(this.gameState.pc * 0.50);
+      const infIncrease = Math.round(this.gameState.inf * 0.50);
+      this.gameState.pc += pcIncrease;
+      this.gameState.inf += infIncrease;
+      console.log(`Added ${pcIncrease} PC and ${infIncrease} INF (50%). New PC: ${this.gameState.pc}, New INF: ${this.gameState.inf}`);
+    },
+    triggerScandal() {
+      if (!this.gameState) {
+        console.warn('gameState is null. Cannot trigger scandal.');
+        return;
+      }
+      this.gameState.be = 90; // Set BE to 90% to trigger scandal
+      this.scandalHeadline = '¡Escándalo forzado por herramientas de desarrollo!'; // Set a default headline
+      this.showScandalEvent = true;
+      this.currentScreen = 'scandal';
+      console.log('Scandal forced! BE set to:', this.gameState.be);
+    },
+    changeLevel() {
+      console.log(`changeLevel to ${this.selectedLevel} called. Not yet implemented.`);
+      // Implement logic to change the game level
+    },
+    resetProgress() {
+      console.log('resetProgress called. Not yet implemented.');
+      // Implement logic to reset game progress
     },
   },
   async mounted() {
     await this.loadGameState();
     if (!this.errorGameState) {
       this.loadCorruptionTypes();
-      await this.loadGameConfig(); // Ensure gameConfig is loaded before proceeding
+      await this.loadGameConfig();
     }
   }
 };
 </script>
 
 <style scoped>
-.game-container {
-  max-width: 100%; /* Ajusta al 100% del contenedor padre (GameLayout) */
-  margin: 0; /* Elimina el margen superior */
-  background: #212529;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-  color: #f3f3f3;
-}
-
 .game-info-panel {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px; /* Añade un padding inferior para separar del contenido siguiente */
-  border-bottom: 1px solid #333; /* Línea divisoria sutil */
-}
-
-@media (min-width: 768px) {
-  .game-info-panel {
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 32px;
-  }
-}
-
-.level-details {
-  flex: 1;
-}
-.character-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
-  margin-top: 8px;
-  background: #2c2f34;
-  object-fit: cover;
-}
-.resource-details p {
-  margin: 0 0 4px 0;
-}
-.scandal-area {
-  background-color: #ffcdd2;
-  color: #c62828;
-  padding: 15px;
-  margin-top: 20px;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  background-color: var(--noir-retro-panel-background);
+  border: 2px solid var(--noir-retro-pure-black);
   border-radius: 8px;
-  border: 1px solid #ef9a9a;
+  margin-bottom: 20px;
 }
-.scandal-alert {
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-.scandal-actions {
+
+.character-info-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  width: 50%;
+  gap: 15px;
 }
-.scandal-actions input {
+
+.character-image {
   width: 100px;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #c62828;
-}
-.scandal-actions button {
-  background-color: #d32f2f;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.scandal-actions button:disabled {
-  background-color: #ef9a9a;
-  cursor: not-allowed;
-}
-.corruption-types-list {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-.corruption-type {
-  background: #313842;
-  padding: 8px 16px;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.corruption-type:hover {
-  background: #5f25d6;
-  color: #fff;
-}
-.game-operational-area,
-.llm-evaluation-area,
-.card-play-area {
-  margin-top: 32px;
-}
-
-.monetization-prompt {
-  background-color: #313842;
-  padding: 20px;
+  height: 100px;
   border-radius: 8px;
-  margin-top: 20px;
-  text-align: center;
-  border: 1px solid var(--primary-color);
+  object-fit: cover;
+  border: 2px solid var(--noir-retro-pure-black);
 }
 
-.monetization-prompt h3 {
-  color: var(--primary-color);
-  margin-bottom: 10px;
+.character-text {
+  display: flex;
+  flex-direction: column;
 }
 
-.monetization-prompt p {
-  margin-bottom: 15px;
-  color: #f3f3f3;
+.character-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8em;
+  color: var(--noir-retro-primary-accent);
+  margin: 0;
 }
 
-.monetization-prompt button {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+.character-description {
+  font-family: 'Roboto', sans-serif;
   font-size: 1em;
+  color: var(--noir-retro-pure-black);
+  margin: 5px 0 0 0;
 }
 
-.monetization-prompt button:hover {
-  background-color: #4a1da8;
+.resources-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 50%;
+  gap: 15px;
 }
 
-.game-over {
-  background-color: #c62828;
-  border-color: #ef9a9a;
+.resource-item {
+  width: 100%;
 }
 
-.game-over h3 {
-  color: white;
+.resource-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9em;
+  margin-bottom: 5px;
 }
 
-.ad-limit-warning {
-  background-color: #ffc107;
-  color: #333;
-  border-color: #e0a800;
+.resource-title {
+  color: #226A6D;
+  font-weight: bold;
 }
 
-.ad-limit-warning h3 {
-  color: #333;
+.resource-value {
+  color: #298488;
+}
+
+.progress-bar-container {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  height: 15px;
+  border: 1px solid var(--noir-retro-pure-black);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out;
+}
+
+.pc-bar { background-color: var(--noir-retro-secondary-accent); }
+.inf-bar { background-color: var(--noir-retro-yellow-ocre); }
+.be-bar { background-color: #6c757d; }
+.be-warning { background-color: #ffc107; }
+.be-danger { background-color: var(--noir-retro-primary-accent); }
+
+/* Estilos adicionales del componente original */
+.scandal-area, .monetization-prompt {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
 }
 
 .dev-tools {
-  background-color: #424242;
-  padding: 15px;
   margin-top: 20px;
-  border-radius: 8px;
-  border: 1px solid #616161;
-}
-
-.dev-tools h3 {
-  color: #ffffff;
-  margin-bottom: 10px;
-}
-
-.dev-tools button {
-  background-color: #616161;
-  color: white;
-  margin-right: 10px;
-}
-
-.dev-calculation-box {
-  background-color: #3a3a3a;
   padding: 15px;
   border-radius: 8px;
-  margin-top: 20px;
-  border: 1px solid #555;
-  color: #f3f3f3;
+  background-color: black;
 }
 
-.dev-calculation-box h3 {
-  color: #ffffff;
-  margin-bottom: 10px;
+.selected-type-display {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8em;
+  color: var(--noir-retro-primary-accent);
+  margin: 0;
+  text-align: center;
+  margin-bottom: 20px; /* Added margin to separate from cards */
 }
 
-.dev-calculation-box p {
-  margin-bottom: 5px;
+.btn-dev-tool {
+  background-color: #6c757d; /* Grey background */
+  color: white; /* White text */
+  border: 1px solid #5a6268;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-dev-tool:hover {
+  background-color: #5a6268;
 }
 </style>

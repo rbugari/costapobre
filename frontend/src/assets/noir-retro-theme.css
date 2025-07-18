@@ -1,0 +1,88 @@
+/* Corruptopolis Noir Retro Theme Styles */
+
+/* Font Imports (Placeholders - will be refined) */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'); /* General sans-serif */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); /* For titles, similar to image */
+
+html.theme-noir-retro {
+  /* Color Palette */
+  --noir-retro-main-background: #273136;
+  --noir-retro-panel-background: #E3DBC3;
+  --noir-retro-primary-accent: #C5462B;
+  --noir-retro-secondary-accent: #298488;
+  --noir-retro-yellow-ocre: #E9C46A;
+  --noir-retro-pure-black: #10141A;
+  --noir-retro-off-white: #F8F8F5;
+
+  /* Semantic Mappings */
+  --color-main-background: var(--noir-retro-main-background);
+  --color-panel-background: var(--noir-retro-panel-background);
+  --color-text-dark: var(--noir-retro-pure-black); /* Text on light backgrounds */
+  --color-text-light: var(--noir-retro-off-white); /* Text on dark backgrounds */
+  --color-button-background: var(--noir-retro-primary-accent);
+  --color-button-border: var(--noir-retro-pure-black);
+  --color-rojo-alerta: var(--noir-retro-primary-accent); /* Reusing primary accent for alerts */
+  --color-rojo-alerta-hover: #A03A25; /* Slightly darker primary accent */
+
+  /* Body Styles */
+  transition: color 0.5s, background-color 0.5s;
+}
+
+/* Button Styles */
+.theme-noir-retro .btn-primary {
+  background-color: var(--noir-retro-primary-accent);
+  color: var(--noir-retro-off-white);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 14px 28px; /* Increased padding for larger text */
+  font-size: 1.5em; /* Larger font size */
+  border: 2px solid var(--noir-retro-pure-black);
+  border-radius: 8px; /* Soft rounded borders */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px var(--noir-retro-pure-black);
+}
+
+.theme-noir-retro .btn-primary:hover,
+.theme-noir-retro .btn-primary:focus {
+  background-color: #A03A25; /* Slightly darker red */
+  transform: translate(1px, 1px); /* Simulates button press */
+  box-shadow: 1px 1px 0px var(--noir-retro-pure-black);
+}
+
+.theme-noir-retro .btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--noir-retro-pure-black);
+}
+
+.theme-noir-retro .btn-secondary {
+  background-color: var(--noir-retro-secondary-accent);
+  color: var(--noir-retro-off-white);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  font-size: 1.3em; /* Larger font size */
+  border: 2px solid var(--noir-retro-pure-black);
+  border-radius: 8px; /* Soft rounded borders */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px var(--noir-retro-pure-black);
+}
+
+html.theme-noir-retro .btn-secondary:hover,
+html.theme-noir-retro .btn-secondary:focus {
+  background-color: #226A6D; /* Slightly darker teal */
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--noir-retro-pure-black);
+}
+
+html.theme-noir-retro .btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--noir-retro-pure-black);
+}
+
+/* General Link Styling to look like buttons (OVERRIDE) */
+.theme-noir-retro a {
+  padding: 12px 24px !important;
+  font-size: 1.3em !important;
+}

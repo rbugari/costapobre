@@ -4,6 +4,7 @@ const GameLevel = require('../models/GameLevel');
 const User = require('../models/User'); // Importar el modelo User
 const { getGameConfig } = require('../config/gameConfig');
 const GameConfig = require('../models/GameConfig'); // Importar GameConfig
+const UserLog = require('../models/UserLog'); // Importar el modelo UserLog
 
 // Helper function to get config value
 const getConfigValue = async (key) => {
@@ -98,12 +99,17 @@ exports.evaluatePlan = async (req, res) => {
 
     console.log('aiController: llmEvaluation.pc_ganancia.valor =', llmEvaluation.pc_ganancia.valor);
     console.log('aiController: gameLevel.pc_gain_factor =', gameLevel.pc_gain_factor);
-    console.log('aiController: llmEvaluation.be_aumento.valor =', llmEvaluation.be_aumento.valor); // Nuevo log
+    console.log('aiController: llmEvaluation.be_aumento.valor =', llmEvaluation.be_aumento.valor);
+    console.log('aiController: llmEvaluation.inf_ganancia.valor =', llmEvaluation.inf_ganancia.valor);
+    console.log('aiController: gameLevel.inf_gain_factor =', gameLevel.inf_gain_factor);
 
     // 3. Aplicar fórmulas de ganancia de recursos
     const pcGanado = Math.round(llmEvaluation.pc_ganancia.valor * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100)));
-    const aumentoBE = llmEvaluation.be_aumento.valor;
+    const aumentoBE = llmEvaluation.be_aumento.valor / 2;
     const infGanado = Math.round(llmEvaluation.inf_ganancia.valor * gameLevel.inf_gain_factor);
+
+    console.log('aiController: Calculated infGanado =', infGanado);
+    console.log('aiController: Calculated aumentoBE =', aumentoBE);
 
     gameState.pc += pcGanado;
     gameState.inf = Math.round(Math.min(100, gameState.inf + infGanado));
@@ -119,7 +125,7 @@ exports.evaluatePlan = async (req, res) => {
     const currentLevel = await GameLevel.findOne({ where: { level_number: gameState.level } });
     let ascended = false;
 
-    if (currentLevel && gameState.pc >= currentLevel.pc_required_for_ascension && gameState.inf >= currentLevel.inf_required_for_ascension) {
+    if (currentLevel && gameState.pc >= currentLevel.pc_required_for_ascension) {
       const nextLevelNumber = gameState.level + 1;
       const nextLevel = await GameLevel.findOne({ where: { level_number: nextLevelNumber } });
 
@@ -141,6 +147,8 @@ exports.evaluatePlan = async (req, res) => {
         gameState.level = nextLevelNumber;
         ascended = true;
         console.log(`¡Jugador ${userId} ha ascendido al nivel ${nextLevelNumber}!`);
+        // Reduce influence by 80% upon level up
+        gameState.inf = Math.round(gameState.inf * 0.20);
       }
     }
 
@@ -148,13 +156,40 @@ exports.evaluatePlan = async (req, res) => {
     let scandalTriggered = false;
     let scandalHeadline = null;
     if (gameState.be >= 85) {
-      scandalTriggered = true;
-      scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
-      console.log(`¡Jugador ${userId} ha disparado un escándalo! BE: ${gameState.be}, Titular: ${scandalHeadline}`);
+      try {
+        scandalTriggered = true;
+        scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
+        console.log(`¡Jugador ${userId} ha disparado un escándalo! BE: ${gameState.be}, Titular: ${scandalHeadline}`);
+      } catch (scandalError) {
+        console.error('Error generating scandal headline:', scandalError.message);
+        // If the scandal headline generation fails, we'll send an error to the client
+        // and prevent the player from being penalized.
+        return res.status(500).json({ msg: 'Error generating scandal headline. Please try again.' });
+      }
     }
 
     // 6. Guardar el estado del juego actualizado
     await gameState.save();
+
+    // Calculate changes for logging
+    const pc_change = gameState.pc - (gameState._previousDataValues.pc || gameState.pc);
+    const inf_change = gameState.inf - (gameState._previousDataValues.inf || gameState.inf);
+    const be_change = gameState.be - (gameState._previousDataValues.be || gameState.be);
+
+    // Log the turn played event
+    await UserLog.create({
+      user_id: userId,
+      event_type: 'turn_played',
+      level: gameState.level,
+      pc_change: pc_change,
+      inf_change: inf_change,
+      be_change: be_change,
+      pc_current: gameState.pc,
+      inf_current: gameState.inf,
+      be_current: gameState.be,
+      action_title: titulo_accion_elegida, 
+      details: { tags: tagsArray, narrated_plan: plan_del_jugador },
+    });
 
     // 7. Volver a cargar la información del nivel después de un posible ascenso
     const updatedGameLevel = await GameLevel.findOne({ where: { level_number: gameState.level } });

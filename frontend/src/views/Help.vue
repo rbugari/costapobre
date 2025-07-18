@@ -1,6 +1,6 @@
 <template>
   <div class="help-container">
-    <h2>Cómo Jugar a "CORRUPTIA"</h2>
+    <h2>Cómo Jugar a "Corruptopolis"</h2>
     <p>¡Bienvenido, futuro líder de Costa Pobre! Tu objetivo es ascender en la jerarquía política utilizando tus habilidades de corrupción.</p>
 
     <h3>Flujo de Juego:</h3>

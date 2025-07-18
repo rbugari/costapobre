@@ -19,10 +19,17 @@
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
 
-/* semantic color variables for this project */
-:root {
+  /* Default semantic color variables for this project (fallback) */
+  --color-main-background: var(--vt-c-white);
+  --color-panel-background: var(--vt-c-white-soft);
+  --color-text-dark: var(--vt-c-black);
+  --color-text-light: var(--vt-c-black-soft);
+  --color-button-background: var(--vt-c-indigo);
+  --color-button-border: var(--vt-c-black);
+  --color-rojo-alerta: #E74C3C;
+  --color-rojo-alerta-hover: #C0392B;
+
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
@@ -50,6 +57,42 @@
   }
 }
 
+/* Theme-specific semantic variable overrides */
+html.theme-ocre {
+  --color-main-background: #4A4238;
+  --color-panel-background: #8C7B5F;
+  --color-text-dark: #5C3A2D;
+  --color-text-light: #D4C08E;
+  --color-button-background: #D4C08E;
+  --color-button-border: #5C3A2D;
+  --color-rojo-alerta: #E74C3C;
+  --color-rojo-alerta-hover: #C0392B;
+}
+
+html.theme-dark {
+  --color-main-background: #1a1a1a;
+  --color-panel-background: #333333;
+  --color-text-dark: #e0e0e0;
+  --color-text-light: #f0f0f0;
+  --color-button-background: #555555;
+  --color-button-border: #888888;
+  --color-rojo-alerta: #e74c3c;
+  --color-rojo-alerta-hover: #c0392b;
+}
+
+html.theme-noir-retro {
+  --color-main-background: var(--noir-retro-main-background);
+  --color-panel-background: var(--noir-retro-panel-background);
+  --color-text-dark: var(--noir-retro-pure-black);
+  --color-text-light: var(--noir-retro-off-white);
+  --color-text: var(--color-text-light); /* Ensure general text color is light */
+  --color-button-background: var(--noir-retro-primary-accent);
+  --color-button-border: var(--noir-retro-pure-black);
+  --color-rojo-alerta: var(--noir-retro-primary-accent);
+  --color-rojo-alerta-hover: #A03A25;
+}
+
+
 *,
 *::before,
 *::after {
@@ -60,27 +103,13 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  transition: color 0.5s, background-color 0.5s;
   line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
+  font-family: 'Roboto', sans-serif; /* Apply Roboto font */
+  font-size: 17px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-smoothing: grayscale;
+  background: var(--color-main-background); /* Apply main background from semantic variable */
+  color: var(--color-text-light); /* Apply main text color from semantic variable */
 }

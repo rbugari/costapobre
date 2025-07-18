@@ -22,7 +22,7 @@
     <div v-if="evaluation.ascended" class="ascended-alert">
       ¡Felicidades! Has ascendido de nivel.
     </div>
-    <button @click="close">Siguiente Turno</button>
+    <button @click="close" class="btn-primary">Siguiente Turno</button>
   </div>
 </template>
 
@@ -48,10 +48,19 @@ export default {
 
 <style scoped>
 .evaluation-view {
-  background: #2c2f34;
+  background: var(--color-panel-background); /* Changed to new palette variable */
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 8px; /* Changed to match new aesthetic */
   text-align: center;
+  border: 2px solid var(--color-button-border); /* Changed to new palette variable */
+  box-shadow: 4px 4px 0px var(--color-button-border); /* Changed to new aesthetic */
+  animation: fade-in-slide-up 0.5s ease-out forwards;
+}
+.evaluation-view h3 {
+  font-family: 'Bebas Neue', sans-serif; /* Updated for consistent title font */
+  font-weight: normal;
+  color: var(--color-text-dark);
+  margin-bottom: 20px;
 }
 .results {
   margin-bottom: 20px;
@@ -60,27 +69,54 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--color-button-border);
+}
+.result-item strong {
+  font-family: 'Roboto', sans-serif; /* Updated for consistent body font */
+  font-weight: normal;
+  color: var(--color-text-dark);
+}
+.result-item span {
+  font-family: 'Roboto', sans-serif; /* Updated for consistent body font */
+  font-weight: normal;
+  color: var(--color-text-dark);
 }
 .advice {
-  background: #313842;
+  background: var(--color-panel-background);
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
+  border: 2px solid var(--color-button-border);
+}
+.advice h4 {
+  font-family: 'Bebas Neue', sans-serif; /* Updated for consistent title font */
+  font-weight: normal;
+  color: var(--color-text-dark);
+  margin-bottom: 10px;
+}
+.advice p {
+  font-family: 'Roboto', sans-serif; /* Updated for consistent body font */
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--color-text-dark);
 }
 .ascended-alert {
-  background-color: #4caf50;
-  color: white;
+  background-color: var(--noir-retro-panel-background);
+  color: var(--noir-retro-pure-black);
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 8px;
   margin-bottom: 20px;
+  border: 2px solid var(--noir-retro-pure-black);
 }
-button {
-  background: #5f25d6;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+
+@keyframes fade-in-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

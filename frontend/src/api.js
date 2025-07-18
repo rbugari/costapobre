@@ -27,7 +27,7 @@ api.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
-      config.headers['x-auth-token'] = accessToken;
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -45,12 +45,20 @@ api.interceptors.response.use(
 
     // If the error is 401 and it's not a refresh token request
     if (error.response.status === 401 && !originalRequest._retry) {
+      // Exclude specific URLs from triggering the redirect to login
+      const excludedUrls = ['/auth/login', '/auth/accept-terms', '/game/config'];
+      const requestUrl = originalRequest.url.replace(api.defaults.baseURL, ''); // Get relative path
+
+      if (excludedUrls.includes(requestUrl)) {
+        return Promise.reject(error); // Allow the 401 to propagate to the component
+      }
+
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
         .then(token => {
-          originalRequest.headers['x-auth-token'] = token;
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
           return api(originalRequest);
         })
         .catch(err => {
@@ -79,7 +87,7 @@ api.interceptors.response.use(
         localStorage.setItem('accessToken', newAccessToken);
         processQueue(null, newAccessToken);
 
-        originalRequest.headers['x-auth-token'] = newAccessToken;
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);

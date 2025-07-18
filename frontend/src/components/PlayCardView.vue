@@ -1,13 +1,17 @@
 <template>
   <div class="play-card-view">
-    <h3>Tu Plan Maestro</h3>
+    <h3 class="plan-master-title">Tu Plan Maestro</h3>
     <div class="selected-card">
-      <h4>{{ card.titulo }}</h4>
+      <div class="selected-card-content">
       <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
-      <p>{{ card.descripcion }}</p>
+      <div class="selected-card-text">
+        <h4>{{ card.titulo }}</h4>
+        <p>{{ card.descripcion }}</p>
+      </div>
+    </div>
       <div class="tags">
-        <strong>Tags obligatorios:</strong>
-        <span v-for="tag in card.tags_obligatorios" :key="tag" class="tag">{{ tag }}</span>
+        <strong>Tags a utilizar:</strong>
+        <span v-for="tag in card.tags_obligatorios" :key="tag" class="tag tag-reveal">{{ tag }}</span>
       </div>
     </div>
     <div class="plan-input">
@@ -21,11 +25,11 @@
         :maxlength="gameConfig && gameConfig.MAX_PLAN_WORDS ? parseInt(gameConfig.MAX_PLAN_WORDS) : null"
       ></textarea>
       <div class="actions">
-        <button @click="toggleRecording" :class="{ 'recording': isRecording }">
+        <button @click="toggleRecording" :class="{ 'recording': isRecording }" class="btn-primary">
           {{ isRecording ? 'Detener Grabación' : 'Grabar Voz' }}
         </button>
-        <button @click="submitPlan" :disabled="!plan.trim() || (gameConfig && wordCount > parseInt(gameConfig.MAX_PLAN_WORDS))">Ejecutar Plan</button>
-        <button @click="cancel" class="cancel-btn">Cancelar</button>
+        <button @click="submitPlan" :disabled="!plan.trim() || (gameConfig && wordCount > parseInt(gameConfig.MAX_PLAN_WORDS))" class="btn-primary">Ejecutar Plan</button>
+        <button @click="cancel" class="btn-secondary">Cancelar</button>
       </div>
     </div>
   </div>
@@ -68,10 +72,14 @@ export default {
     console.log('PlayCardView mounted. Initial gameConfig:', this.gameConfig);
   },
   watch: {
-    generatedPlan(newVal) {
-      if (newVal) {
-        this.plan = newVal;
-      }
+    generatedPlan: {
+      immediate: true,
+      handler(newVal) {
+        console.log('PlayCardView: generatedPlan watcher triggered. newVal:', newVal);
+        if (newVal) {
+          this.plan = newVal;
+        }
+      },
     },
     gameConfig: {
       immediate: true,
@@ -176,86 +184,90 @@ export default {
 </script>
 
 <style scoped>
-.play-card-view {
-  background: #2c2f34;
-  padding: 20px;
-  border-radius: 12px;
-}
-.selected-card {
-  background: #313842;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-.card-image {
-  width: 30%;
-  height: auto;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  object-fit: cover;
-  display: block; /* Para centrar la imagen */
-  margin-left: auto; /* Para centrar la imagen */
-  margin-right: auto; /* Para centrar la imagen */
-}
-.tags {
-  margin-top: 10px;
-}
-.tag {
-  background: #5f25d6;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  margin-right: 5px;
-  font-size: 0.9em;
-}
-.plan-input .input-limits {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 1.2em; /* Aumentar tamaño de fuente */
-  font-weight: bold; /* Negrita */
-  color: #e0e0e0; /* Color más brillante */
-}
-.plan-input textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #444;
-  background: #212529;
-  color: #f3f3f3;
-  resize: vertical;
-}
-.actions {
-  margin-top: 15px;
-  text-align: right;
-}
-.actions button {
-  background: #5f25d6;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-.actions .cancel-btn {
-  background: #6c757d;
-}
-.actions button.recording {
-  background: #dc3545;
-  animation: pulse 1.5s infinite;
+.play-card-view h3.plan-master-title {
+  color: var(--noir-retro-primary-accent);
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-  }
+.selected-card {
+  background: var(--color-panel-background);
+  padding: 0; /* Removed padding */
+  border-radius: 8px; /* Changed to match new aesthetic */
+  margin-bottom: 15px;
+  border: 2px solid var(--color-button-border);
+  box-shadow: 4px 4px 0px var(--color-button-border);
+}
+
+.selected-card-content {
+  display: flex;
+  align-items: flex-start; /* Align items to the top */
+  gap: 15px;
+  padding: 15px;
+}
+
+.selected-card-text {
+  flex: 1;
+}
+
+.selected-card h4 {
+  font-family: 'Bebas Neue', sans-serif; /* Updated for consistent title font */
+  font-weight: normal; /* Bebas Neue is already bold */
+  color: var(--color-text-dark);
+  margin: 0 0 5px 0; /* Adjusted margin */
+}
+.selected-card p {
+  font-family: 'Roboto', sans-serif;
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--noir-retro-pure-black);
+  margin: 0;
+}
+.card-image {
+  width: 120px; /* Fixed width for the image */
+  height: auto; /* Auto height to maintain aspect ratio */
+  border-radius: 8px; /* Changed to match new aesthetic */
+  object-fit: contain; /* Ensure the whole image is visible */
+  display: block;
+  flex-shrink: 0; /* Prevent image from shrinking */
+}
+.tags {
+  margin-top: 15px; /* Added margin-top */
+  padding: 10px 10px; /* Add padding to align with text */
+  text-align: center; /* Center the tags */
+}
+.tags strong {
+  color: var(--noir-retro-secondary-accent); /* Blue color for tags title */
+  display: block; /* Make it a block to center */
+  margin-bottom: 10px; /* Space below title */
+  font-weight: bold; /* Ensure bold */
+}
+.tag {
+  background: var(--noir-retro-primary-accent);
+  color: var(--noir-retro-off-white);
+  padding: 8px 12px; /* Increased padding */
+  border-radius: 8px;
+  margin: 5px; /* Adjusted margin for better spacing */
+  font-size: 1.1em; /* Increased font size */
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  font-weight: normal;
+  border: 1px solid var(--noir-retro-pure-black);
+  display: inline-block; /* Ensure tags are inline-block for margin */
+  cursor: default; /* Remove pointer cursor */
+  box-shadow: none; /* Remove button-like shadow */
+}
+
+.plan-input textarea {
+  width: 100%;
+  min-height: 300px; /* Increased height */
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid var(--color-button-border);
+  background: var(--color-panel-background);
+  color: var(--color-text-dark);
+  resize: vertical;
+  font-size: 1.2em;
+  box-sizing: border-box; /* Ensure padding is included in width */
 }
 </style>

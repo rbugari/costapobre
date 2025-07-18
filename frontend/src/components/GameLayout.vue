@@ -1,32 +1,30 @@
 <template>
   <div class="game-board-container">
     <header class="game-board-header">
-      <div class="header-left">
-        <div v-if="userProfile" class="user-info">
-          <img
-            v-if="userProfile.avatar_url"
-            :src="getCharacterImageUrl(userProfile.avatar_url)"
-            alt="User Avatar"
-            class="user-avatar"
-          />
-          <span>{{ userProfile.nickname }}</span>
-          <button @click="goToEditProfile" class="edit-profile-button">
-            Editar Perfil
-          </button>
-        </div>
-      </div>
-      <div class="header-right">
-        <h1 class="game-title">CORRUPTIA</h1>
-      </div>
+      <img :src="headerImage" alt="Corruptopolis IA" class="header-image-bg" />
     </header>
     <main class="game-board-main">
       <router-view />
     </main>
     <footer class="game-board-footer">
       <div class="footer-buttons">
-        <button @click="goToHistory" class="history-btn">Historial</button>
-        <button @click="goToHelp" class="help-btn">Ayuda</button>
-        <button @click="logout" class="logout-btn">Salir</button>
+        <div class="footer-left-section">
+          <div v-if="userProfile" class="user-info-footer">
+            <img
+              v-if="userProfile.avatar_url"
+              :src="getCharacterImageUrl(userProfile.avatar_url)"
+              alt="User Avatar"
+              class="user-avatar-footer"
+            />
+            <span class="user-nickname-footer">{{ userProfile.nickname }}</span>
+          </div>
+        </div>
+        <div class="footer-right-section">
+          <button @click="goToHistory" class="btn-secondary">Historial</button>
+          <button @click="goToHelp" class="btn-secondary">Ayuda</button>
+          <button @click="goToEditProfile" class="btn-secondary">Editar Perfil</button>
+          <button @click="logout" class="btn-secondary">Salir</button>
+        </div>
       </div>
     </footer>
   </div>
@@ -34,12 +32,14 @@
 
 <script>
 import api from '../api';
+import headerImage from '../assets/header1.png';
 
 export default {
   name: 'GameLayout',
   data() {
     return {
       userProfile: null,
+      headerImage: headerImage,
     };
   },
   async mounted() {
@@ -85,92 +85,111 @@ export default {
   max-width: 1200px; /* Ancho máximo del tablero */
   width: 90%; /* Ocupa el 90% del ancho disponible */
   margin: 0 auto; /* Centra el tablero */
-  background-color: #212529; /* Color de fondo del tablero */
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  background-color: #084244; /* Custom background color */
+  border: 5px solid var(--noir-retro-pure-black); /* Updated to Noir Retro palette */
+  border-radius: 8px; /* Added rounded borders */
+  box-shadow: 10px 10px 0px var(--noir-retro-pure-black); /* Updated to Noir Retro palette */
   overflow: hidden; /* Asegura que el contenido no se desborde */
+  padding: 20px; /* Added generous padding */
 }
 
 .game-board-header {
-  background-color: #2c3034;
-  padding: 15px 30px;
-  border-bottom: 1px solid #333;
+  background-color: var(--noir-retro-primary-accent); /* Updated to Noir Retro palette */
+  padding: 5px 0; /* Adjusted padding for minimal margin */
+  border-bottom: 3px solid var(--noir-retro-pure-black); /* Updated to Noir Retro palette */
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center content horizontally */
   align-items: center;
+  border-radius: 8px; /* Rounded all corners */
+}
+
+.header-image-bg {
+  width: 100%;
+  height: 60px; /* Adjust height as needed for your image */
+  object-fit: contain;
+  border-radius: 8px; /* Added rounded corners to the image */
+}
+
+.header-logo {
+  /* This is now replaced by the background image */
+  display: none; /* Hide the img tag */
 }
 
 .header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  /* This section is now empty in the template, so no specific styles needed here */
 }
 
 .header-right {
-  text-align: right;
+  /* This section is now removed from the template */
 }
 
 .game-title {
-  margin: 0;
-  color: #fff;
-  font-size: 1.8em;
+  /* This is now replaced by the image */
+  display: none; /* Hide the text title */
 }
 
 .user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: none; /* Hide the old user info in header */
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 100%;
-  object-fit: cover;
-}
-
-.edit-profile-button {
-  background: #5f25d6;
-  border: none;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
+  display: none; /* Hide the old user avatar in header */
 }
 
 .game-board-main {
   flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
-  padding: 20px;
+  padding: 20px 0; /* Adjusted padding for alignment */
   overflow-y: auto; /* Permite scroll si el contenido es muy largo */
 }
 
 .game-board-footer {
-  background-color: #2c3034;
+  background-color: var(--noir-retro-primary-accent); /* Updated to Noir Retro palette */
   padding: 15px 0;
-  border-top: 1px solid #333;
+  border-top: 3px solid var(--noir-retro-pure-black); /* Updated to Noir Retro palette */
+  border-radius: 8px; /* Rounded all corners */
 }
 
 .footer-buttons {
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  justify-content: space-between; /* Distribute items to ends */
+  align-items: center; /* Center items vertically */
+  padding: 0 20px; /* Add padding from edges */
 }
-.footer-buttons button {
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+
+.footer-left-section {
+  display: flex;
+  align-items: center;
+}
+
+.footer-right-section {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Space between buttons */
+}
+
+.user-info-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--noir-retro-off-white);
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.1em;
+}
+
+.user-avatar-footer {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--noir-retro-off-white);
+}
+
+.user-nickname-footer {
   font-weight: bold;
 }
-.footer-buttons .help-btn {
-  background-color: var(--secondary-color);
-}
-.footer-buttons .logout-btn {
-  background-color: var(--danger-color);
-}
-.footer-buttons .history-btn {
-  background-color: var(--primary-color);
+
+.footer-buttons button {
+  /* Removed specific button styles, now uses btn-secondary */
 }
 
 /* Responsive adjustments */

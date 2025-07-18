@@ -10,12 +10,10 @@ const User = sequelize.define('User', {
   nickname: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
   },
   email: {
     type: DataTypes.STRING(255),
     allowNull: false,
-    unique: true,
   },
   password_hash: {
     type: DataTypes.STRING(255),
@@ -45,6 +43,14 @@ const User = sequelize.define('User', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  email_verification_code: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+  },
+  is_email_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   last_login_timestamp: {
     type: DataTypes.DATE,
     allowNull: true,
@@ -68,6 +74,10 @@ const User = sequelize.define('User', {
   anuncios_vistos: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
+  },
+  terms_accepted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
 }, {
   tableName: 'users',

@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = function (req, res, next) {
-  const token = req.header('x-auth-token');
+  const authHeader = req.header('Authorization');
+
+  if (!authHeader) {
+    return res.status(401).json({ msg: 'No token, authorization denied' });
+  }
+
+  const token = authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
 
   if (!token) {
     return res.status(401).json({ msg: 'No token, authorization denied' });

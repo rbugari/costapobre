@@ -2,12 +2,23 @@ const LLMInteractionHistory = require('../models/LLMInteractionHistory');
 
 exports.getAllInteractions = async (req, res) => {
   try {
-    const interactions = await LLMInteractionHistory.findAll({ where: { user_id: req.user.id } });
-    console.log('Backend: Interacciones recuperadas para el usuario:', req.user.id, interactions);
+    const { page = 1, limit = 5, level } = req.query;
+    const offset = (page - 1) * limit;
 
-    // Parsear los campos JSON que vienen como strings
+    const whereClause = { user_id: req.user.id };
+    if (req.query.level) {
+      whereClause.level = req.query.level;
+    }
+
+    const { count, rows: interactions } = await LLMInteractionHistory.findAndCountAll({
+      where: whereClause,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['timestamp', 'DESC']],
+    });
+
     const parsedInteractions = interactions.map(interaction => {
-      const data = interaction.toJSON(); // Obtener una representación plana del objeto Sequelize
+      const data = interaction.toJSON();
       if (typeof data.llm_evaluation_json === 'string') {
         data.llm_evaluation_json = JSON.parse(data.llm_evaluation_json);
       }
@@ -17,7 +28,12 @@ exports.getAllInteractions = async (req, res) => {
       return data;
     });
 
-    res.json(parsedInteractions);
+    res.json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+      history: parsedInteractions,
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
