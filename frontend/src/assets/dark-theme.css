@@ -1,29 +1,88 @@
-/* Dark Theme Styles (Placeholder) */
+/* Dark Theme Styles */
+
+/* Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 html.theme-dark {
-  --color-main-background: #1a1a1a;
-  --color-panel-background: #333333;
-  --color-text-dark: #e0e0e0;
-  --color-text-light: #f0f0f0;
-  --color-button-background: #555555;
-  --color-button-border: #888888;
-  --color-rojo-alerta: #e74c3c;
-  --color-rojo-alerta-hover: #c0392b;
+  /* Color Palette */
+  --dark-main-background: #1a1a1a;
+  --dark-panel-background: #333333;
+  --dark-primary-accent: #BB86FC; /* Purple */
+  --dark-secondary-accent: #03DAC6; /* Teal */
+  --dark-yellow-ocre: #FFEB3B; /* Yellow */
+  --dark-pure-black: #000000;
+  --dark-off-white: #FFFFFF;
 
-  font-family: sans-serif;
-  font-size: 16px;
+  /* Semantic Mappings */
+  --color-main-background: var(--dark-main-background);
+  --color-panel-background: var(--dark-panel-background);
+  --color-text-dark: var(--dark-off-white); /* Text on dark backgrounds */
+  --color-text-light: var(--dark-pure-black); /* Text on light backgrounds */
+  --color-button-background: var(--dark-primary-accent);
+  --color-button-border: var(--dark-pure-black);
+  --color-rojo-alerta: #CF6679; /* Red for alerts */
+  --color-rojo-alerta-hover: #B00020; /* Darker red */
+
+  /* Body Styles */
+  transition: color 0.5s, background-color 0.5s;
 }
 
-.theme-dark .btn-primary,
+/* Button Styles */
+.theme-dark .btn-primary {
+  background-color: var(--dark-primary-accent);
+  color: var(--dark-pure-black);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  font-size: 1.5em;
+  border: 2px solid var(--dark-pure-black);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px #084244;
+}
+
+.theme-dark .btn-primary:hover,
+.theme-dark .btn-primary:focus {
+  background-color: #9A58D8; /* Slightly darker purple */
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #084244;
+}
+
+.theme-dark .btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #084244;
+}
+
 .theme-dark .btn-secondary {
-  background-color: var(--color-button-background);
-  color: var(--color-text-dark);
-  border: 2px solid var(--color-button-border);
-  font-family: sans-serif;
+  background-color: var(--dark-secondary-accent);
+  color: var(--dark-pure-black);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  font-size: 1.3em;
+  border: 2px solid var(--dark-pure-black);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px #084244;
 }
 
-html.theme-dark .btn-primary:hover,
-html.theme-dark .btn-dark:hover {
-  background-color: var(--color-button-background);
-  box-shadow: 0 0 5px var(--color-button-border);
+html.theme-dark .btn-secondary:hover,
+html.theme-dark .btn-secondary:focus {
+  background-color: #018786; /* Slightly darker teal */
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #084244;
+}
+
+html.theme-dark .btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #084244;
+}
+
+/* General Link Styling to look like buttons (OVERRIDE) */
+.theme-dark a {
+  padding: 12px 24px !important;
+  font-size: 1.3em !important;
 }

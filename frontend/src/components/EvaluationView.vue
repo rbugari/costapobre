@@ -1,28 +1,28 @@
 <template>
   <div class="evaluation-view">
-    <h3>Evaluación del Mentor</h3>
+    <h3>{{ $t('evaluation_view.mentor_evaluation_title') }}</h3>
     <div class="results">
       <div class="result-item">
-        <strong>Puntos de Corrupción (PC) Ganados:</strong>
+        <strong>{{ $t('evaluation_view.pc_gained') }}</strong>
         <span>{{ evaluation.pc_ganado_this_turn.toFixed(2) }}</span>
       </div>
       <div class="result-item">
-        <strong>Influencia (INF) Ganada:</strong>
+        <strong>{{ $t('evaluation_view.inf_gained') }}</strong>
         <span>{{ evaluation.inf_ganado_this_turn }}</span>
       </div>
       <div class="result-item">
-        <strong>Aumento de Escándalo (BE):</strong>
+        <strong>{{ $t('evaluation_view.be_increase') }}</strong>
         <span>+{{ evaluation.be_aumento_this_turn }}</span>
       </div>
     </div>
     <div class="advice">
-      <h4>Consejo del Mentor:</h4>
+      <h4>{{ $t('evaluation_view.mentor_advice_title') }}</h4>
       <p>{{ evaluation.llm_advice_json.advice }}</p>
     </div>
     <div v-if="evaluation.ascended" class="ascended-alert">
-      ¡Felicidades! Has ascendido de nivel.
+      {{ $t('evaluation_view.ascended_alert') }}
     </div>
-    <button @click="close" class="btn-primary">Siguiente Turno</button>
+    <button @click="close" class="btn-primary">{{ $t('evaluation_view.next_turn_button') }}</button>
   </div>
 </template>
 

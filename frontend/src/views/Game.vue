@@ -11,7 +11,7 @@
           class="character-image"
         />
         <div class="character-text">
-          <h3 class="character-title">{{ gameState.levelInfo ? gameState.levelInfo.title : 'Cargando...' }}</h3>
+          <h3 class="character-title">{{ gameState.levelInfo ? gameState.levelInfo.title : $t('game.loading') }}</h3>
           <p class="character-description" v-if="gameState.levelInfo">{{ gameState.levelInfo.description_visual }}</p>
         </div>
       </div>
@@ -20,7 +20,7 @@
       <div class="resources-container">
         <div class="resource-item">
           <div class="resource-label">
-            <span class="resource-title">Puntos de Corrupción (PC)</span>
+            <span class="resource-title">{{ $t('game.pc_title') }}</span>
             <span class="resource-value">{{ gameState.pc }} / {{ gameState.levelInfo.pc_required_for_ascension }}</span>
           </div>
           <div class="progress-bar-container">
@@ -29,7 +29,7 @@
         </div>
         <div class="resource-item">
           <div class="resource-label">
-            <span class="resource-title">Influencia (INF)</span>
+            <span class="resource-title">{{ $t('game.inf_title') }}</span>
             <span class="resource-value">{{ gameState.inf }} / 100</span>
           </div>
           <div class="progress-bar-container">
@@ -38,7 +38,7 @@
         </div>
         <div class="resource-item">
           <div class="resource-label">
-            <span class="resource-title">Barra de Escándalo (BE)</span>
+            <span class="resource-title">{{ $t('game.be_title') }}</span>
             <span class="resource-value">{{ gameState.be }} / 100</span>
           </div>
           <div class="progress-bar-container">
@@ -50,10 +50,10 @@
 
     <!-- El resto del template original -->
     <div v-if="gameState && gameState.be > 85 && !showScandalEvent" class="scandal-area">
-      <div class="scandal-alert">¡Alerta! Tu nivel de escándalo es peligrosamente alto.</div>
+      <div class="scandal-alert">{{ $t('game.scandal_alert') }}</div>
       <div class="scandal-actions">
-        <input type="number" v-model.number="infToSpend" placeholder="INF a gastar" min="1" :max="gameState.inf" />
-        <button @click="reduceScandal" :disabled="!infToSpend || infToSpend <= 0" class="btn-primary">Reducir Escándalo</button>
+        <input type="number" v-model.number="infToSpend" :placeholder="$t('game.inf_to_spend_placeholder')" min="1" :max="gameState.inf" />
+        <button @click="reduceScandal" :disabled="!infToSpend || infToSpend <= 0" class="btn-primary">{{ $t('game.reduce_scandal_button') }}</button>
       </div>
     </div>
     <div class="game-operational-area" v-if="currentScreen === 'game' && gameState">
@@ -67,50 +67,58 @@
     </div>
     <div class="llm-evaluation-area" v-if="currentScreen === 'evaluation' && llmEvaluation">
       <EvaluationView :evaluation="llmEvaluation" @closeEvaluation="closeEvaluation" />
-
-      <div v-if="isDevMode && devCalculationDetails" class="dev-calculation-box">
-        <h3>Detalles de Cálculo (Dev)</h3>
-        <p><strong>Puntuación LLM (1-10):</strong> {{ devCalculationDetails.llm_pc_valor }}</p>
-        <p><strong>Factor de Ganancia PC (Nivel):</strong> {{ devCalculationDetails.pc_gain_factor }}</p>
-        <p><strong>Influencia Actual:</strong> {{ devCalculationDetails.inf_actual }}</p>
-        <p><strong>Multiplicador por Influencia:</strong> {{ devCalculationDetails.influence_multiplier.toFixed(2) }}</p>
-        <p><strong>Ganancia PC (sin redondear):</strong> {{ devCalculationDetails.raw_pc_gain.toFixed(2) }}</p>
-        <p><strong>Ganancia PC (final redondeada):</strong> {{ devCalculationDetails.final_pc_gain }}</p>
-      </div>
     </div>
     <div class="card-play-area" v-if="currentScreen === 'game' && selectedCard && gameConfig">
       <PlayCardView :card="selectedCard" @playCard="handlePlayCard" @cancel="cancelPlayCard" :gameConfig="gameConfig" :generatedPlan="generatedDevPlan" />
     </div>
     <ScandalEvent v-if="currentScreen === 'scandal' && showScandalEvent" :headline="scandalHeadline" :user-info="gameState.userInfo" @scandal-resolved="handleScandalResolved" />
     <div v-if="currentScreen === 'gameOver' && showGameOver" class="monetization-prompt game-over">
-      <h3>¡GAME OVER!</h3>
-      <p>Tu escándalo ha llegado a un nivel insostenible y tu carrera política ha terminado.</p>
-      <button @click="$router.push('/login')" class="btn-primary">Volver al Inicio</button>
+      <h3>{{ $t('game.game_over_title') }}</h3>
+      <p>{{ $t('game.game_over_message') }}</p>
+      <button @click="$router.push('/login')" class="btn-primary">{{ $t('game.back_to_start_button') }}</button>
     </div>
-    <div v-if="currentScreen === 'premiumAccess'" class="monetization-prompt">
-      <h3>¡Acceso Premium Requerido!</h3>
-      <p>Has completado los niveles gratuitos. Adquiere el Pase Premium para continuar.</p>
-      <button @click="$router.push('/premium-access')" class="btn-primary">Ir a la Tienda Premium</button>
-    </div>
+
+    <GameWon v-if="currentScreen === 'gameWon'" />
+
+    
+    
+    
+
     <div v-if="isDevMode" class="dev-tools">
-      <h3>Herramientas de Desarrollo</h3>
-      <button @click="addPc()" class="btn-dev-tool">Añadir 10% PC/INF</button>
-      <button @click="addInf()" class="btn-dev-tool">Añadir 50% PC/INF</button>
-      <button @click="triggerScandal" class="btn-dev-tool">Forzar Escándalo</button>
+        <h3>{{ $t('game.dev_tools_title') }}</h3>
+        <p><strong>Current Language:</strong> {{ gameState.userInfo.selected_language }}</p>
+        <div class="theme-switcher">
+          <button @click="setTheme('ocre')">{{ $t('app.ocre_theme') }}</button>
+          <button @click="setTheme('dark')">{{ $t('app.dark_theme') }}</button>
+          <button @click="setTheme('noir-retro')">{{ $t('app.noir_retro_theme') }}</button>
+        </div>
+      <button @click="addPc()" class="btn-dev-tool">{{ $t('game.add_pc_inf_10_button') }}</button>
+      <button @click="addInf()" class="btn-dev-tool">{{ $t('game.add_pc_inf_50_button') }}</button>
+      <button @click="triggerScandal" class="btn-dev-tool">{{ $t('game.force_scandal_button') }}</button>
       <select v-model="selectedLevel" @change="changeLevel">
-        <option disabled value="">Seleccionar Nivel</option>
-        <option v-for="n in gameState.maxLevel" :key="n" :value="n">Nivel {{ n }}</option>
+        <option disabled value="">{{ $t('game.select_level_placeholder') }}</option>
+        <option v-for="n in gameState.maxLevel" :key="n" :value="n">{{ $t('game.level_option', { n: n }) }}</option>
       </select>
-      <button @click="resetProgress" class="btn-dev-tool">Resetear Progreso</button>
+      <button @click="resetProgress" class="btn-dev-tool">{{ $t('game.reset_progress_button') }}</button>
 
       <div v-if="selectedCard">
         <select v-model="devPlanQuality">
-          <option value="muy bueno">Muy Bueno</option>
-          <option value="bueno">Bueno</option>
-          <option value="regular">Regular</option>
-          <option value="malo">Malo</option>
+          <option value="muy bueno">{{ $t('game.dev_plan_quality_muy_bueno') }}</option>
+          <option value="bueno">{{ $t('game.dev_plan_quality_bueno') }}</option>
+          <option value="regular">{{ $t('game.dev_plan_quality_regular') }}</option>
+          <option value="malo">{{ $t('game.dev_plan_quality_malo') }}</option>
         </select>
-        <button @click="generateDevPlan" class="btn-dev-tool">Generar Plan (Dev)</button>
+        <button @click="generateDevPlan" class="btn-dev-tool">{{ $t('game.generate_dev_plan_button') }}</button>
+      </div>
+
+      <div v-if="devCalculationDetails" class="dev-calculation-box">
+        <h3>{{ $t('game.dev_calculation_details_title') }}</h3>
+        <p><strong>{{ $t('game.llm_score') }}</strong> {{ devCalculationDetails.llm_pc_valor }}</p>
+        <p><strong>{{ $t('game.pc_gain_factor') }}</strong> {{ devCalculationDetails.pc_gain_factor }}</p>
+        <p><strong>{{ $t('game.current_influence') }}</strong> {{ devCalculationDetails.inf_actual }}</p>
+        <p><strong>{{ $t('game.influence_multiplier') }}</strong> {{ devCalculationDetails.influence_multiplier.toFixed(2) }}</p>
+        <p><strong>{{ $t('game.raw_pc_gain') }}</strong> {{ devCalculationDetails.raw_pc_gain.toFixed(2) }}</p>
+        <p><strong>{{ $t('game.final_rounded_pc_gain') }}</strong> {{ devCalculationDetails.final_pc_gain }}</p>
       </div>
     </div>
   </div>
@@ -123,6 +131,8 @@ import PlayCardView from '../components/PlayCardView.vue';
 import ScandalEvent from '../components/ScandalEvent.vue';
 import CorruptionWheel from '../components/CorruptionWheel.vue';
 import api from '../api';
+import eventBus from '../eventBus';
+import GameWon from '../components/GameWon.vue';
 
 export default {
   name: 'Game',
@@ -131,7 +141,8 @@ export default {
     EvaluationView,
     PlayCardView,
     ScandalEvent,
-    CorruptionWheel
+    CorruptionWheel,
+    GameWon,
   },
   data() {
     return {
@@ -173,48 +184,87 @@ export default {
     },
     async handlePlayCard(result) {
       const actionTitle = this.selectedCard ? this.selectedCard.titulo : 'N/A';
+      const tags = this.selectedCard ? this.selectedCard.tags_obligatorios : [];
+      const narratedPlan = result.narrated_plan_text;
       this.selectedCard = null;
-      if (result.evaluation.gameOver) {
-        this.showGameOver = true;
-        this.gameState = null;
-        this.llmEvaluation = null;
-        this.showScandalEvent = false;
-        this.currentScreen = 'gameOver';
-        return;
-      }
-      if (result.evaluation.requiresPremiumAccess) {
-        this.currentScreen = 'premiumAccess';
-        this.$router.push('/premium-access');
-        return;
-      }
-      if (result.evaluation.scandal_triggered) {
-        this.scandalHeadline = result.evaluation.scandal_headline;
-        this.showScandalEvent = true;
-        this.llmEvaluation = null;
-        this.currentScreen = 'scandal';
-        return;
-      }
-      this.llmEvaluation = result.evaluation;
-      this.gameState = result.evaluation.updated_game_state;
-      this.devCalculationDetails = result.evaluation.dev_calculation_details;
-      this.currentScreen = 'evaluation';
-      if (result.evaluation.requiresRescue) {
-        this.showScandalRescuePrompt = true;
-      } else {
-        this.showScandalRescuePrompt = false;
-      }
+
+      // Extract updated game state from the evaluation result
+      const { pc, inf, be } = result.evaluation.updated_game_state;
+
       try {
-        if (this.gameState) {
-          await api.post('/history/add', {
-            level: this.gameState.level,
-            action_title: actionTitle,
-            narrated_plan_text: result.narrated_plan_text,
-            llm_evaluation_json: result.evaluation.llm_evaluation_json,
-            llm_advice_json: result.evaluation.llm_advice_json,
-          });
+        // Call saveProgress endpoint
+        console.log('Calling /game/progress with:', { pc, inf, be, action_title: actionTitle, tags, narrated_plan: narratedPlan });
+        const saveProgressResponse = await api.post('/game/progress', {
+          pc,
+          inf,
+          be,
+          action_title: actionTitle,
+          tags,
+          narrated_plan: narratedPlan,
+        });
+
+        this.gameState = saveProgressResponse.data; // Update gameState with the response from saveProgress
+
+        if (this.gameState.gameWon) {
+          this.currentScreen = 'gameWon';
+          return;
         }
-      } catch (historyErr) {
-        console.error('Error saving LLM interaction to history:', historyErr);
+
+        if (this.gameState.gameOver) {
+          this.showGameOver = true;
+          this.gameState = null;
+          this.llmEvaluation = null;
+          this.showScandalEvent = false;
+          this.currentScreen = 'gameOver';
+          return;
+        }
+
+        if (this.gameState.scandal_triggered) {
+          this.scandalHeadline = this.gameState.scandal_headline;
+          this.showScandalEvent = true;
+          this.llmEvaluation = null;
+          this.currentScreen = 'scandal';
+          return;
+        }
+
+        this.llmEvaluation = result.evaluation; // Keep the LLM evaluation for display
+        this.devCalculationDetails = result.evaluation.dev_calculation_details;
+
+        // Update i18n locale immediately after gameState is updated
+        if (this.gameState.userInfo && this.gameState.userInfo.selected_language) {
+          this.$i18n.locale = this.gameState.userInfo.selected_language;
+          localStorage.setItem('selectedLanguage', this.gameState.userInfo.selected_language);
+        }
+
+        this.currentScreen = 'evaluation';
+        if (this.gameState.requiresRescue) {
+          this.showScandalRescuePrompt = true;
+        } else {
+          this.showScandalRescuePrompt = false;
+        }
+
+        // History API call can happen in the background
+        api.post('/history/add', {
+          level: this.gameState.level,
+          action_title: actionTitle,
+          narrated_plan_text: narratedPlan,
+          llm_evaluation_json: result.evaluation.llm_evaluation_json,
+          llm_advice_json: result.evaluation.llm_advice_json,
+          updated_game_state: this.gameState, // Pass the updated game state from saveProgress
+        }).then(historyResponse => {
+          eventBus.emit('update-gamestate', this.gameState); // Emit update
+        }).catch(historyErr => {
+          console.error('Error saving LLM interaction to history:', historyErr);
+        });
+
+      } catch (error) {
+        console.error('Error in handlePlayCard:', error);
+        // Handle error, e.g., show an alert to the user
+        if (error.response && error.response.data && error.response.data.msg) {
+          alert(error.response.data.msg);
+        } else {
+          alert('An unexpected error occurred.');
+        }
       }
     },
     cancelPlayCard() {
@@ -233,6 +283,7 @@ export default {
       this.llmEvaluation = null;
       this.selectedCorruptionType = null;
       this.currentScreen = 'game';
+      eventBus.emit('update-gamestate', this.gameState); // Emit update
     },
     async loadGameState() {
       this.isLoadingGameState = true;
@@ -240,7 +291,13 @@ export default {
       try {
         const response = await api.get('/game/progress');
         this.gameState = response.data;
-        this.isDevMode = this.gameState.gameMode === 'desarrollo';
+        // Update i18n locale based on user's selected language from backend
+        if (this.gameState.userInfo && this.gameState.userInfo.selected_language) {
+          this.$i18n.locale = this.gameState.userInfo.selected_language;
+          localStorage.setItem('selectedLanguage', this.gameState.userInfo.selected_language);
+        }
+        eventBus.emit('update-gamestate', this.gameState); // Emit update
+        this.isDevMode = this.gameState.debugMode;
         console.log('Game Mode received from backend:', this.gameState.gameMode);
         if (response.data.scandal_triggered) {
           this.scandalHeadline = response.data.scandal_headline;
@@ -248,7 +305,7 @@ export default {
         }
       } catch (error) {
         console.error('Error loading game state:', error);
-        this.errorGameState = 'Failed to load game state.';
+        this.errorGameState = this.$t('game.error_loading_game_state');
       } finally {
         this.isLoadingGameState = false;
       }
@@ -258,21 +315,22 @@ export default {
       this.isLoadingCorruptionTypes = true;
       this.errorCorruptionTypes = null;
       try {
+        const languageToSend = this.gameState.userInfo.selected_language || 'es';
         const response = await api.post('/ai/get-corruption-types', {
           cargo_actual: this.gameState.levelInfo.title,
-          idioma: this.gameState.userInfo.selected_language || 'es',
+          idioma: languageToSend,
         });
         this.corruptionTypes = response.data.map(name => ({ name }));
       } catch (error) {
         console.error('Error loading corruption types:', error);
-        this.errorCorruptionTypes = 'Failed to load corruption types.';
+        this.errorCorruptionTypes = this.$t('game.error_loading_corruption_types');
       } finally {
         this.isLoadingCorruptionTypes = false;
       }
     },
     async reduceScandal() {
       if (this.infToSpend > this.gameState.inf) {
-        alert('No tienes suficiente Influencia.');
+        alert(this.$t('game.not_enough_inf_alert'));
         return;
       }
       try {
@@ -280,11 +338,12 @@ export default {
           inf_to_spend: this.infToSpend,
         });
         this.gameState = response.data;
+        eventBus.emit('update-gamestate', this.gameState); // Emit update
         this.infToSpend = 1;
-        alert(`Has gastado ${this.infToSpend} de Influencia para reducir tu Escándalo.`);
+        alert(this.$t('game.scandal_reduced_alert_prefix') + ' ' + this.infToSpend + ' ' + this.$t('game.scandal_reduced_alert_suffix'));
       } catch (error) {
         console.error('Error reducing scandal:', error);
-        alert('No se pudo reducir el escándalo.');
+        alert(this.$t('game.reduce_scandal_error'));
       }
     },
     async loadGameConfig() {
@@ -292,7 +351,7 @@ export default {
         const response = await api.get('/game/config');
         this.gameConfig = response.data;
       } catch (error) {
-        console.error('Error loading game config:', error);
+        console.error(this.$t('game.error_loading_game_config'), error);
       }
     },
     async generateDevPlan() {
@@ -313,7 +372,7 @@ export default {
         console.log('LLM Generated Dev Plan:', this.generatedDevPlan);
       } catch (error) {
         console.error('Error generating dev plan:', error);
-        alert('Error al generar el plan de desarrollo.');
+        alert(this.$t('game.error_generating_dev_plan'));
       }
     },
     // Placeholder methods for development tools
@@ -327,6 +386,7 @@ export default {
       this.gameState.pc += pcIncrease;
       this.gameState.inf += infIncrease;
       console.log(`Added ${pcIncrease} PC and ${infIncrease} INF (10%). New PC: ${this.gameState.pc}, New INF: ${this.gameState.inf}`);
+      eventBus.emit('update-gamestate', this.gameState); // Emit update
     },
     addInf() {
       if (!this.gameState) {
@@ -338,6 +398,7 @@ export default {
       this.gameState.pc += pcIncrease;
       this.gameState.inf += infIncrease;
       console.log(`Added ${pcIncrease} PC and ${infIncrease} INF (50%). New PC: ${this.gameState.pc}, New INF: ${this.gameState.inf}`);
+      eventBus.emit('update-gamestate', this.gameState); // Emit update
     },
     triggerScandal() {
       if (!this.gameState) {
@@ -349,6 +410,7 @@ export default {
       this.showScandalEvent = true;
       this.currentScreen = 'scandal';
       console.log('Scandal forced! BE set to:', this.gameState.be);
+      eventBus.emit('update-gamestate', this.gameState); // Emit update
     },
     changeLevel() {
       console.log(`changeLevel to ${this.selectedLevel} called. Not yet implemented.`);
@@ -358,6 +420,15 @@ export default {
       console.log('resetProgress called. Not yet implemented.');
       // Implement logic to reset game progress
     },
+    handleGameStateUpdateFromAd(updatedGameState) {
+      this.gameState = updatedGameState;
+      eventBus.emit('update-gamestate', this.gameState); // Re-emit to GameLayout
+    },
+    setTheme(themeName) {
+      document.documentElement.className = ''; // Clear existing classes from html
+      document.documentElement.classList.add(`theme-${themeName}`);
+      localStorage.setItem('theme', themeName);
+    }
   },
   async mounted() {
     await this.loadGameState();
@@ -365,11 +436,16 @@ export default {
       this.loadCorruptionTypes();
       await this.loadGameConfig();
     }
+    eventBus.on('gamestate-updated-by-ad', this.handleGameStateUpdateFromAd);
+  },
+  beforeUnmount() {
+    eventBus.off('gamestate-updated-by-ad', this.handleGameStateUpdateFromAd);
   }
-};
+}
 </script>
 
 <style scoped>
+@import '../assets/game-responsive.css';
 .game-info-panel {
   display: flex;
   justify-content: space-between;
@@ -464,6 +540,17 @@ export default {
 .be-warning { background-color: #ffc107; }
 .be-danger { background-color: var(--noir-retro-primary-accent); }
 
+@media (max-width: 768px) {
+  .game-info-panel {
+    flex-direction: column;
+  }
+
+  .character-info-container,
+  .resources-container {
+    width: 100%;
+  }
+}
+
 /* Estilos adicionales del componente original */
 .scandal-area, .monetization-prompt {
   margin-top: 20px;
@@ -499,5 +586,25 @@ export default {
 
 .btn-dev-tool:hover {
   background-color: #5a6268;
+}
+
+.theme-switcher {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.theme-switcher button {
+  padding: 8px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.theme-switcher button:hover {
+  background-color: #45a049;
 }
 </style>

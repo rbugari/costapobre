@@ -232,8 +232,8 @@ exports.getCards = async (userId, cargo_actual, tipo_de_corrupcion_elegido, idio
       const llmResponseContent = chatCompletion.choices[0]?.message?.content || '{}';
       
       const parsedResponse = JSON.parse(llmResponseContent);
-      // Groq might return 'subopciones' or 'options'
-      const cards = parsedResponse.subopciones || parsedResponse.options || [];
+      // Groq might return 'sub_options' or 'options'
+      const cards = parsedResponse.sub_options || parsedResponse.options || [];
 
       // Add a random image URL to each card
       const cardsWithImages = cards.map(card => {
@@ -276,7 +276,10 @@ exports.evaluatePlan = async (userId, cargo_actual, titulo_accion_elegida, tags_
   humanPromptContent = humanPromptContent.replace(/{{titulo_accion_elegida}}/g, titulo_accion_elegida || 'N/A');
   humanPromptContent = humanPromptContent.replace(/{{tags_accion_elegida}}/g, Array.isArray(tags_accion_elegida) ? tags_accion_elegida.join(', ') : tags_accion_elegida || 'N/A');
   humanPromptContent = humanPromptContent.replace(/{{plan_del_jugador}}/g, plan_del_jugador || 'N/A');
+  console.log('aiService.js (evaluatePlan): Idioma received:', idioma);
+  console.log('aiService.js (evaluatePlan): Human prompt content BEFORE idioma replacement:', humanPromptContent);
   humanPromptContent = humanPromptContent.replace(/{{idioma}}/g, idioma || 'es');
+  console.log('aiService.js (evaluatePlan): Human prompt content AFTER idioma replacement:', humanPromptContent);
 
   const messages = [
     { role: 'system', content: config.system_prompt || '' },

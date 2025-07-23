@@ -1,37 +1,37 @@
 <template>
   <div class="history-container">
-    <h2>Historial de Interacciones</h2>
+    <h2>{{ $t('history.title') }}</h2>
 
     <div class="filters">
-      <label for="level-filter">Filtrar por Nivel:</label>
+      <label for="level-filter">{{ $t('history.filter_by_level') }}</label>
       <select id="level-filter" v-model="selectedLevel" @change="fetchHistory(1)">
-        <option value="all">Todos los Niveles</option>
-        <option v-for="n in maxLevel" :key="n" :value="n">Nivel {{ n }}</option>
+        <option value="all">{{ $t('history.all_levels') }}</option>
+        <option v-for="n in maxLevel" :key="n" :value="n">{{ $t('history.level_option', { n: n }) }}</option>
       </select>
     </div>
 
     <div v-if="history.length === 0">
-      <p>No hay interacciones para el nivel seleccionado.</p>
+      <p>{{ $t('history.no_interactions') }}</p>
     </div>
 
     <div v-else>
       <div v-for="(entry, index) in history" :key="index" class="history-entry">
-        <h3>Turno #{{ totalItems - ((currentPage - 1) * 5) - index }} - Nivel {{ entry.level }}</h3>
-        <p><strong>Acción:</strong> {{ entry.action_title }}</p>
-        <p><strong>Plan Narrado:</strong> {{ entry.narrated_plan_text }}</p>
-        <p><strong>Evaluación:</strong> {{ entry.llm_evaluation_json?.evaluation }}</p>
-        <p><strong>Consejo:</strong> {{ entry.llm_advice_json?.advice }}</p>
+        <h3>{{ $t('history.turn') }} #{{ totalItems - ((currentPage - 1) * 5) - index }} - {{ $t('history.level') }} {{ entry.level }}</h3>
+        <p><strong>{{ $t('history.action') }}</strong> {{ entry.action_title }}</p>
+        <p><strong>{{ $t('history.narrated_plan') }}</strong> {{ entry.narrated_plan_text }}</p>
+        <p><strong>{{ $t('history.evaluation') }}</strong> {{ entry.llm_evaluation_json?.evaluation }}</p>
+        <p><strong>{{ $t('history.advice') }}</strong> {{ entry.llm_advice_json?.advice }}</p>
         <p class="timestamp">{{ new Date(entry.timestamp).toLocaleString() }}</p>
       </div>
     </div>
 
     <div class="pagination-controls">
-      <button @click="prevPage" :disabled="currentPage <= 1" class="btn-secondary">Anterior</button>
-      <span>Página {{ currentPage }} de {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn-secondary">Siguiente</button>
+      <button @click="prevPage" :disabled="currentPage <= 1" class="btn-secondary">{{ $t('history.previous_button') }}</button>
+      <span>{{ $t('history.page_of', { current: currentPage, total: totalPages }) }}</span>
+      <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn-secondary">{{ $t('history.next_button') }}</button>
     </div>
 
-    <router-link to="/game" class="btn-primary back-button">Volver al Juego</router-link>
+    <router-link to="/game" class="btn-primary back-button">{{ $t('history.back_to_game_button') }}</router-link>
   </div>
 </template>
 
@@ -70,7 +70,7 @@ export default {
         this.totalItems = res.data.totalItems;
       } catch (err) {
         console.error('Error fetching history:', err);
-        alert('Error al cargar el historial.');
+        alert(this.$t('history.error_fetching_history'));
       }
     },
     nextPage() {

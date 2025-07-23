@@ -1,4 +1,5 @@
 const LLMInteractionHistory = require('../models/LLMInteractionHistory');
+const User = require('../models/User');
 
 exports.getAllInteractions = async (req, res) => {
   try {
@@ -41,11 +42,12 @@ exports.getAllInteractions = async (req, res) => {
 };
 
 exports.addInteraction = async (req, res) => {
-  const { level, action_title, narrated_plan_text, llm_evaluation_json, llm_advice_json } = req.body;
+  const { level, action_title, narrated_plan_text, llm_evaluation_json, llm_advice_json, updated_game_state } = req.body;
+  const userId = req.user.id;
 
   try {
     const newInteraction = await LLMInteractionHistory.create({
-      user_id: req.user.id,
+      user_id: userId,
       level,
       action_title,
       narrated_plan_text,
@@ -53,7 +55,13 @@ exports.addInteraction = async (req, res) => {
       llm_advice_json,
     });
 
-    res.json(newInteraction);
+    const user = await User.findByPk(userId);
+
+    res.json({
+      newInteraction,
+      userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado } : null,
+      updated_game_state: updated_game_state, // Pass the updated game state back
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

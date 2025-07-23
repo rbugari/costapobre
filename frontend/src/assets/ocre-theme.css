@@ -1,63 +1,88 @@
 /* Ocre Theme Styles */
 
 /* Font Imports */
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Indie+Flower&family=Luckiest+Guy&family=Permanent+Marker&family=Patrick+Hand&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'); /* General sans-serif */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); /* For titles, similar to image */
 
 html.theme-ocre {
-  /* Corruptopolis Board Game Palette */
-  --color-main-background: #4A4238;
-  --color-panel-background: #8C7B5F;
-  --color-text-dark: #5C3A2D;
-  --color-text-light: #D4C08E;
-  --color-button-background: #D4C08E;
-  --color-button-border: #5C3A2D;
-  --color-rojo-alerta: #E74C3C;
-  --color-rojo-alerta-hover: #C0392B;
+  /* Color Palette */
+  --ocre-main-background: #4A4238;
+  --ocre-panel-background: #8C7B5F;
+  --ocre-primary-accent: #D4C08E; /* Light Ocre */
+  --ocre-secondary-accent: #5C3A2D; /* Dark Brown */
+  --ocre-yellow-ocre: #E9C46A; /* Keeping this for consistency, though it's the main color */
+  --ocre-pure-black: #10141A;
+  --ocre-off-white: #F8F8F5;
+
+  /* Semantic Mappings */
+  --color-main-background: var(--ocre-main-background);
+  --color-panel-background: var(--ocre-panel-background);
+  --color-text-dark: var(--ocre-secondary-accent); /* Text on light backgrounds */
+  --color-text-light: var(--ocre-off-white); /* Text on dark backgrounds */
+  --color-button-background: var(--ocre-primary-accent);
+  --color-button-border: var(--ocre-secondary-accent);
+  --color-rojo-alerta: #E74C3C; /* Red for alerts */
+  --color-rojo-alerta-hover: #C0392B; /* Darker red */
 
   /* Body Styles */
   transition: color 0.5s, background-color 0.5s;
 }
 
-/* Primary Button Styles */
+/* Button Styles */
 .theme-ocre .btn-primary {
-  background-color: var(--color-button-background);
-  color: var(--color-text-dark);
-  font-family: 'Indie Flower', cursive;
+  background-color: var(--ocre-primary-accent);
+  color: var(--ocre-secondary-accent);
+  font-family: 'Bebas Neue', sans-serif;
   text-transform: uppercase;
-  padding: 10px 20px;
-  border: 2px solid var(--color-button-border);
-  border-radius: 0;
+  padding: 14px 28px;
+  font-size: 1.5em;
+  border: 2px solid var(--ocre-secondary-accent);
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px #084244;
 }
 
 .theme-ocre .btn-primary:hover,
 .theme-ocre .btn-primary:focus {
-  background-color: var(--color-button-background);
-  transform: scale(1.05);
-  box-shadow: 0 0 5px var(--color-button-border);
+  background-color: #C0A878; /* Slightly darker ocre */
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #084244;
 }
 
 .theme-ocre .btn-primary:active {
-  transform: scale(0.98);
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #084244;
 }
 
-/* Secondary Button Styles */
 .theme-ocre .btn-secondary {
-  background-color: var(--color-button-background);
-  color: var(--color-text-dark);
-  font-family: 'Indie Flower', cursive;
-  padding: 10px 20px;
-  border: 2px solid var(--color-button-border);
-  border-radius: 0;
+  background-color: var(--ocre-secondary-accent);
+  color: var(--ocre-off-white);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  font-size: 1.3em;
+  border: 2px solid var(--ocre-primary-accent);
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 3px 3px 0px #084244;
 }
 
 html.theme-ocre .btn-secondary:hover,
 html.theme-ocre .btn-secondary:focus {
-  background-color: var(--color-button-background);
-  color: var(--color-text-dark);
-  box-shadow: 0 0 5px var(--color-button-border);
+  background-color: #4A2E22; /* Slightly darker brown */
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #084244;
+}
+
+html.theme-ocre .btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #084244;
+}
+
+/* General Link Styling to look like buttons (OVERRIDE) */
+.theme-ocre a {
+  padding: 12px 24px !important;
+  font-size: 1.3em !important;
 }

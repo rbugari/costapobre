@@ -1,35 +1,36 @@
 <template>
   <div class="play-card-view">
-    <h3 class="plan-master-title">Tu Plan Maestro</h3>
+    <h3 class="plan-master-title">{{ $t('play_card_view.plan_master_title') }}</h3>
     <div class="selected-card">
       <div class="selected-card-content">
-      <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
+      <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.title" class="card-image" />
       <div class="selected-card-text">
-        <h4>{{ card.titulo }}</h4>
-        <p>{{ card.descripcion }}</p>
+        <h4>{{ card.title }}</h4>
+        <p>{{ card.description }}</p>
       </div>
     </div>
       <div class="tags">
-        <strong>Tags a utilizar:</strong>
-        <span v-for="tag in card.tags_obligatorios" :key="tag" class="tag tag-reveal">{{ tag }}</span>
+        <strong>{{ $t('play_card_view.tags_to_use') }}</strong>
+        <span v-for="tag in card.required_tags" :key="tag" class="tag tag-reveal">{{ tag }}</span>
       </div>
     </div>
     <div class="plan-input">
       <div class="input-limits">
-        <span v-if="gameConfig && gameConfig.MAX_PLAN_WORDS">Palabras: {{ wordCount }} / {{ gameConfig.MAX_PLAN_WORDS }}</span>
-        <span v-if="isRecording">Tiempo restante: {{ remainingTime }}s</span>
+        <span v-if="gameConfig && gameConfig.MAX_PLAN_WORDS">{{ $t('play_card_view.words_label') }} {{ wordCount }} / {{ gameConfig.MAX_PLAN_WORDS }}</span>
+        <span v-if="isRecording">{{ $t('play_card_view.time_remaining_label') }} {{ remainingTime }}s</span>
       </div>
       <textarea 
         v-model="plan" 
-        placeholder="Describe tu plan aquí..."
+        :placeholder="$t('play_card_view.plan_placeholder')"
         :maxlength="gameConfig && gameConfig.MAX_PLAN_WORDS ? parseInt(gameConfig.MAX_PLAN_WORDS) : null"
       ></textarea>
-      <div class="actions">
+      <div class="actions main-actions">
         <button @click="toggleRecording" :class="{ 'recording': isRecording }" class="btn-primary">
-          {{ isRecording ? 'Detener Grabación' : 'Grabar Voz' }}
+          {{ isRecording ? $t('play_card_view.stop_recording_button') : $t('play_card_view.record_voice_button') }}
         </button>
-        <button @click="submitPlan" :disabled="!plan.trim() || (gameConfig && wordCount > parseInt(gameConfig.MAX_PLAN_WORDS))" class="btn-primary">Ejecutar Plan</button>
-        <button @click="cancel" class="btn-secondary">Cancelar</button>
+        <button @click="submitPlan" :disabled="!plan.trim() || (gameConfig && wordCount > parseInt(gameConfig.MAX_PLAN_WORDS))" class="btn-primary">{{ $t('play_card_view.execute_plan_button') }}</button>
+        <button @click="useWildcard" class="btn-primary btn-wildcard">{{ $t('play_card_view.use_wildcard_button') }}</button>
+        <button @click="cancel" class="btn-primary">{{ $t('play_card_view.cancel_button') }}</button>
       </div>
     </div>
   </div>
@@ -97,7 +98,7 @@ export default {
   methods: {
     async submitPlan() {
       if (this.gameConfig && this.wordCount > this.gameConfig.MAX_PLAN_WORDS) {
-        alert(`Tu plan excede el límite de ${this.gameConfig.MAX_PLAN_WORDS} palabras.`);
+        alert(this.$t('play_card_view.plan_exceeds_word_limit', { max_words: this.gameConfig.MAX_PLAN_WORDS }));
         return;
       }
       try {
@@ -114,7 +115,7 @@ export default {
         if (err.response && err.response.status === 403) {
           alert(err.response.data.msg); // Mostrar el mensaje específico del backend
         } else {
-          alert('Error al evaluar el plan.');
+          alert(this.$t('play_card_view.error_evaluating_plan'));
         }
       }
     },
@@ -129,7 +130,7 @@ export default {
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert('Tu navegador no soporta la API de Reconocimiento de Voz. Por favor, intenta con Chrome o Edge.');
+        alert(this.$t('play_card_view.speech_recognition_not_supported'));
         return;
       }
 
@@ -150,7 +151,7 @@ export default {
 
       this.recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        alert(`Error en el reconocimiento de voz: ${event.error}`);
+        alert(`${this.$t('play_card_view.speech_recognition_error')} ${event.error}`);
       };
 
       this.recognition.onresult = (event) => {
@@ -175,6 +176,21 @@ export default {
     },
     getCardImageUrl(relativePath) {
       return `http://localhost:5000${relativePath}`;
+    },
+    async useWildcard() {
+      alert(this.$t('play_card_view.watch_ad_for_plan')); // Simulate watching an ad
+      try {
+        const response = await api.post('/ai/generate-wildcard-plan', {
+          titulo_accion_elegida: this.card.title,
+          descripcion_accion_elegida: this.card.description,
+          tags_accion_elegida: this.card.required_tags,
+          idioma: this.$parent.gameState.userInfo.selected_language || 'es',
+        });
+        this.plan = response.data.plan;
+      } catch (error) {
+        console.error('Error generating wildcard plan:', error);
+        alert(this.$t('play_card_view.error_generating_wildcard_plan'));
+      }
     },
   },
   beforeDestroy() {
@@ -232,30 +248,63 @@ export default {
   flex-shrink: 0; /* Prevent image from shrinking */
 }
 .tags {
-  margin-top: 15px; /* Added margin-top */
-  padding: 10px 10px; /* Add padding to align with text */
-  text-align: center; /* Center the tags */
+  display: flex; /* Use flexbox for alignment */
+  flex-wrap: wrap; /* Allow tags to wrap on smaller screens */
+  align-items: center; /* Vertically center items */
+  justify-content: center; /* Center the whole block */
+  gap: 10px; /* Space between title and tags */
+  padding: 10px;
+  margin-top: 15px;
 }
+
 .tags strong {
-  color: var(--noir-retro-secondary-accent); /* Blue color for tags title */
-  display: block; /* Make it a block to center */
-  margin-bottom: 10px; /* Space below title */
-  font-weight: bold; /* Ensure bold */
+  color: var(--noir-retro-secondary-accent);
+  font-weight: bold;
+  font-size: 1.2em; /* Make title slightly larger */
 }
+
 .tag {
-  background: var(--noir-retro-primary-accent);
-  color: var(--noir-retro-off-white);
-  padding: 8px 12px; /* Increased padding */
-  border-radius: 8px;
-  margin: 5px; /* Adjusted margin for better spacing */
-  font-size: 1.1em; /* Increased font size */
+  background: transparent;
+  color: #226A6D;
+  padding: 5px 10px;
+  margin: 0;
+  font-size: 1.4em; /* Larger font size for tags */
   font-family: 'Bebas Neue', sans-serif;
   text-transform: uppercase;
-  font-weight: normal;
-  border: 1px solid var(--noir-retro-pure-black);
-  display: inline-block; /* Ensure tags are inline-block for margin */
-  cursor: default; /* Remove pointer cursor */
-  box-shadow: none; /* Remove button-like shadow */
+  font-weight: bold;
+  border: none;
+  text-decoration: underline;
+  text-decoration-color: #c0392b; /* Red underline */
+  text-underline-offset: 4px; /* Space between text and underline */
+  display: inline-block;
+  cursor: default;
+  box-shadow: none;
+}
+
+.main-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.main-actions .btn-primary {
+  flex-grow: 1; /* Allow buttons to grow and fill space */
+}
+
+@media (max-width: 768px) {
+  .main-actions {
+    flex-direction: column;
+  }
+}
+
+.btn-wildcard {
+  background-color: #f1c40f; /* Yellow background */
+  color: #2c3e50; /* Dark text for contrast */
+  font-weight: bold;
+}
+
+.btn-wildcard:hover {
+  background-color: #f39c12; /* Darker yellow on hover */
 }
 
 .plan-input textarea {

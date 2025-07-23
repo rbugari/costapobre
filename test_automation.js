@@ -6,7 +6,7 @@ const USERNAME = process.argv[2]; // El usuario que ya debe existir en tu base d
 const PASSWORD = process.argv[3]; // La contraseña del usuario
 const PLAY_INTERVAL_MIN = 1000; // Mínimo 1 segundo
 const PLAY_INTERVAL_MAX = 3000; // Máximo 3 segundos
-const TARGET_LEVEL = 7; // Nivel objetivo para terminar la simulación
+
 
 let accessToken = null;
 let refreshToken = null;
@@ -127,10 +127,7 @@ async function playTurn() {
         console.log(`[${new Date().toLocaleTimeString()}] Estado post-escándalo: Nivel ${gameProgress.level}, PC: ${gameProgress.pc}, INF: ${gameProgress.inf.toFixed(0)}, BE: ${gameProgress.be}`);
     }
 
-    if (currentLevel >= TARGET_LEVEL) {
-        console.log(`[${new Date().toLocaleTimeString()}] ¡Objetivo alcanzado! El usuario ${USERNAME} ha llegado al Nivel ${TARGET_LEVEL}.`);
-        return false; // Terminar simulación
-    }
+    
 
     // 1. Generar y seleccionar tipo de corrupción
     let corruptionType = null;
@@ -157,9 +154,10 @@ async function playTurn() {
         });
         
         const cards = cardsResponse.data;
+        console.log(`[${new Date().toLocaleTimeString()}] Cartas recibidas:`, JSON.stringify(cards, null, 2));
         if (cards && cards.length > 0) {
             chosenCard = cards[getRandomInt(0, cards.length - 1)];
-            console.log(`[${new Date().toLocaleTimeString()}] Carta seleccionada: "${chosenCard.titulo}" (Tags: ${chosenCard.tags_obligatorios.join(', ')})`);
+            console.log(`[${new Date().toLocaleTimeString()}] Carta seleccionada: "${chosenCard.titulo}" (Tags: ${chosenCard.required_tags.join(', ')})`);
         } else {
             console.warn(`[${new Date().toLocaleTimeString()}] No se recibieron cartas para el tipo de corrupción "${corruptionType}".`);
             return true;
@@ -175,7 +173,7 @@ async function playTurn() {
         const devPlanResponse = await axios.post(`${BASE_URL}/ai/generate-dev-plan`, {
             titulo_accion_elegida: chosenCard.titulo,
             descripcion_accion_elegida: chosenCard.descripcion,
-            tags_accion_elegida: chosenCard.tags_obligatorios,
+            tags_accion_elegida: chosenCard.tags,
             quality_level: 'muy bueno' // Siempre generar un plan de alta calidad para avanzar
         });
         generatedPlan = devPlanResponse.data.plan;
@@ -190,7 +188,7 @@ async function playTurn() {
     try {
         const evaluateResponse = await axios.post(`${BASE_URL}/ai/evaluate-plan`, {
             titulo_accion_elegida: chosenCard.titulo,
-            tags_accion_elegida: chosenCard.tags_obligatorios,
+            tags_accion_elegida: chosenCard.tags,
             plan_del_jugador: generatedPlan,
             cargo_actual: gameProgress.levelInfo.title, // Pass the current level title as cargo_actual
             playerLevel: parseInt(gameProgress.level, 10) // Ensure level is an integer
@@ -219,6 +217,16 @@ async function playTurn() {
             be: gameProgress.be + be_aumento_this_turn
         });
 
+        if (saveProgressResponse.data.gameWon) {
+            console.log(`[${new Date().toLocaleTimeString()}] ¡Juego ganado! El usuario ${USERNAME} ha completado el juego.`);
+            return false; // Terminar simulación
+        }
+
+        // Explicitly check for win condition on the client side for verification
+        if (gameProgress.level === 7 && gameProgress.pc >= 1000) {
+            console.log(`[${new Date().toLocaleTimeString()}] [VERIFICACIÓN CLIENTE] ¡Condiciones de victoria alcanzadas! Nivel: ${gameProgress.level}, PC: ${gameProgress.pc}`);
+        }
+
         if (evaluation.requiresPremiumAccess) {
             console.log(`[${new Date().toLocaleTimeString()}] El juego requiere acceso premium para avanzar de nivel. Terminando simulación.`);
             return false;
@@ -242,7 +250,7 @@ async function runSimulation() {
     }
 
     let continueSimulation = true;
-    while (continueSimulation && currentLevel < TARGET_LEVEL) {
+    while (continueSimulation) {
         continueSimulation = await playTurn();
         if (continueSimulation) {
             const waitTime = getRandomInt(PLAY_INTERVAL_MIN, PLAY_INTERVAL_MAX);

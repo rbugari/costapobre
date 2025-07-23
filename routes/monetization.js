@@ -13,10 +13,8 @@ router.post('/simulate-premium', monetizationController.simulatePremiumPurchase)
 router.post('/simulate-scandal-rescue', monetizationController.simulateScandalRescuePurchase);
 
 // Simulate adding an ad view for guest users
-router.post('/simulate-ad-view', monetizationController.simulateAddAdView);
 
-// Admin-only: Set guest user status (this would typically be in an admin panel route)
-// For testing purposes, we'll expose it here, but it should be protected by an admin middleware
-router.post('/simulate-set-guest', monetizationController.simulateSetGuestUser);
+
+router.post('/reward-ad', monetizationController.rewardAd);
 
 module.exports = router;

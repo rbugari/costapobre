@@ -12,16 +12,15 @@ const GameLevel = sequelize.define('GameLevel', {
     allowNull: false,
     unique: true,
   },
-  title: {
+  title_en: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  title_es: {
     type: DataTypes.STRING(100),
     allowNull: false,
   },
   pc_required_for_ascension: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
-  inf_required_for_ascension: {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0,
@@ -32,15 +31,19 @@ const GameLevel = sequelize.define('GameLevel', {
     defaultValue: 1,
   },
   inf_gain_factor: {
-    type: DataTypes.FLOAT, // Usamos FLOAT porque los valores son decimales
+    type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1.00,
+    defaultValue: 1,
   },
   character_image_url: {
     type: DataTypes.STRING(512),
     allowNull: true,
   },
-  description_visual: {
+  description_en: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  description_es: {
     type: DataTypes.TEXT,
     allowNull: true,
   },

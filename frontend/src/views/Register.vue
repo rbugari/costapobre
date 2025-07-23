@@ -1,26 +1,26 @@
 <template>
   <div class="auth-container">
     <div class="auth-form">
-      <h2>Crear Cuenta</h2>
+      <h2>{{ $t('register.create_account_title') }}</h2>
       <form @submit.prevent="register">
-        <input type="text" v-model="nickname" placeholder="Nickname" required />
-        <input type="email" v-model="email" placeholder="Email" required />
-        <input type="password" v-model="password" placeholder="Contraseña" required />
-        <input type="password" v-model="passwordConfirm" placeholder="Confirmar Contraseña" required />
+        <input type="text" v-model="nickname" :placeholder="$t('register.nickname_placeholder')" required />
+        <input type="email" v-model="email" :placeholder="$t('register.email_placeholder')" required />
+        <input type="password" v-model="password" :placeholder="$t('register.password_placeholder')" required />
+        <input type="password" v-model="passwordConfirm" :placeholder="$t('register.confirm_password_placeholder')" required />
         
         <select v-model="country_of_origin">
-          <option value="">Seleccionar País</option>
+          <option value="">{{ $t('register.select_country_placeholder') }}</option>
           <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
         </select>
 
-        <input type="number" v-model="age" placeholder="Edad" />
-        <input type="text" v-model="political_ideology" placeholder="Ideología Política" />
-        <textarea v-model="personal_profile" placeholder="Perfil Personal"></textarea>
+        <input type="number" v-model="age" :placeholder="$t('register.age_placeholder')" />
+        <input type="text" v-model="political_ideology" :placeholder="$t('register.political_ideology_placeholder')" />
+        <textarea v-model="personal_profile" :placeholder="$t('register.personal_profile_placeholder')"></textarea>
         
         <div class="form-group">
-          <label for="avatar-upload">Foto de Avatar (opcional):</label>
+          <label for="avatar-upload">{{ $t('register.avatar_label') }}</label>
           <input type="file" id="avatar-upload" @change="onFileSelected" accept="image/*" />
-          <p class="help-text">Formatos permitidos: JPG, PNG, GIF, WEBP. Tamaño máximo: 2MB.</p>
+          <p class="help-text">{{ $t('register.avatar_help_text') }}</p>
           <div v-if="avatarPreviewUrl" class="avatar-preview-container">
             <img :src="avatarPreviewUrl" alt="Avatar Preview" class="avatar-preview" />
           </div>
@@ -30,10 +30,10 @@
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
-        <button type="submit" class="btn-primary">Registrarse</button>
+        <button type="submit" class="btn-primary">{{ $t('register.register_button') }}</button>
       </form>
       <p class="auth-switch">
-        ¿Ya tienes una cuenta? <router-link to="/">Inicia Sesión</router-link>
+        {{ $t('register.already_have_account_question') }} <router-link to="/" class="btn-secondary">{{ $t('register.login_link') }}</router-link>
       </p>
     </div>
   </div>
@@ -65,10 +65,15 @@ export default {
       ],
     };
   },
+  watch: {
+    selected_language(newLang) {
+      this.$i18n.locale = newLang;
+    },
+  },
   methods: {
     async register() {
       if (this.password !== this.passwordConfirm) {
-        alert('Las contraseñas no coinciden');
+        alert(this.$t('register.passwords_do_not_match'));
         return;
       }
 
@@ -91,10 +96,10 @@ export default {
             'Content-Type': 'multipart/form-data',
           },
         });
-        alert(res.data.msg); // 'Registro exitoso. Por favor, verifica tu email...'
+        alert(this.$t('register.registration_successful_prefix') + ' ' + this.$t('register.registration_successful_suffix')); // 'Registro exitoso. Por favor, verifica tu email...'
         this.$router.push({ name: 'VerifyEmail', query: { email: this.email } });
       } catch (err) {
-        const errorMessage = err.response?.data?.msg || 'Ha ocurrido un error inesperado durante el registro.';
+        const errorMessage = err.response?.data?.msg || this.$t('register.unexpected_error');
         alert(errorMessage);
       }
     },
@@ -109,7 +114,7 @@ export default {
       // Validar tipo de archivo
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Formato de archivo no permitido. Por favor, sube una imagen JPG, PNG, GIF o WEBP.');
+        alert(this.$t('register.invalid_file_format'));
         this.selectedFile = null;
         this.avatarPreviewUrl = null;
         return;
@@ -118,7 +123,7 @@ export default {
       // Validar tamaño de archivo (2MB máximo)
       const maxSize = 2 * 1024 * 1024; // 2MB
       if (file.size > maxSize) {
-        alert('El tamaño de la imagen excede el límite de 2MB.');
+        alert(this.$t('register.file_size_exceeded'));
         this.selectedFile = null;
         this.avatarPreviewUrl = null;
         return;

@@ -1,12 +1,12 @@
 <template>
   <div class="action-cards-container">
-    <div v-if="isLoading">Cargando acciones...</div>
+    <div v-if="isLoading">{{ $t('action_cards.loading_actions') }}</div>
     <div v-if="error">{{ error }}</div>
     <transition-group name="card-fade-slide" tag="div" class="cards-grid">
-      <div v-for="card in cards" :key="card.titulo" class="card" @click="selectCard(card)">
-        <h4>{{ card.titulo }}</h4>
-        <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.titulo" class="card-image" />
-        <p>{{ card.descripcion }}</p>
+      <div v-for="card in cards" :key="card.title" class="card" @click="selectCard(card)">
+        <h4>{{ card.title }}</h4>
+        <img v-if="card.image_url" :src="getCardImageUrl(card.image_url)" :alt="card.title" class="card-image" />
+        <p>{{ card.description }}</p>
       </div>
     </transition-group>
   </div>
@@ -60,7 +60,7 @@ export default {
         this.cards = response.data;
       } catch (err) {
         console.error('Error fetching cards:', err);
-        this.error = 'No se pudieron cargar las acciones.';
+        this.error = this.$t('action_cards.error_loading_actions');
       } finally {
         this.isLoading = false;
       }
@@ -78,6 +78,7 @@ export default {
 <style scoped>
 .action-cards-container {
   text-align: center;
+  padding: 0 20px;
 }
 .cards-grid {
   display: grid;

@@ -1,16 +1,16 @@
 <template>
   <div class="accept-terms-container">
     <div class="card">
-      <h2>Aceptación de Términos y Condiciones</h2>
+      <h2>{{ $t('accept_terms.title') }}</h2>
       <div class="terms-content">
         <div v-html="termsText" class="terms-section"></div>
         <div v-html="disclaimerText" class="terms-section"></div>
       </div>
       <div class="checkbox-container">
         <input type="checkbox" id="acceptCheckbox" v-model="accepted" />
-        <label for="acceptCheckbox">He leído y acepto los términos y condiciones y el descargo de responsabilidad.</label>
+        <label for="acceptCheckbox">{{ $t('accept_terms.checkbox_label') }}</label>
       </div>
-      <button @click="acceptTerms" :disabled="!accepted" class="btn-primary">Aceptar y Continuar</button>
+      <button @click="acceptTerms" :disabled="!accepted" class="btn-primary">{{ $t('accept_terms.accept_button') }}</button>
     </div>
   </div>
 </template>
@@ -38,14 +38,14 @@ export default {
         this.disclaimerText = response.data.DISCLAIMER_TEXT;
       } catch (error) {
         console.error('Error loading terms and disclaimer:', error);
-        alert('Error al cargar los términos y condiciones. Por favor, inténtalo de nuevo más tarde.');
+        alert(this.$t('accept_terms.error_loading_terms'));
       }
     },
     async acceptTerms() {
       const userId = this.$route.query.userId;
       if (!userId) {
         console.error('User ID not found in route query.');
-        alert('Error: No se pudo identificar al usuario. Por favor, inténtalo de nuevo.');
+        alert(this.$t('accept_terms.error_user_not_identified'));
         return;
       }
       try {
@@ -55,7 +55,7 @@ export default {
         this.$router.push('/game'); // Redirect to game after accepting
       } catch (error) {
         console.error('Error accepting terms:', error);
-        alert('Error al aceptar los términos. Por favor, inténtalo de nuevo.');
+        alert(this.$t('accept_terms.error_accepting_terms'));
       }
     },
   },
