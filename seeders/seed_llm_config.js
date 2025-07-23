@@ -10,20 +10,20 @@ const seedLLMConfig = async () => {
       {
         config_name: 'category_generator',
         system_prompt: 'Eres un experto en corrupción política. Tu tarea es generar categorías de corrupción para un juego de simulación.',
-        human_prompt: 'Genera {{num_tipos}} tipos de corrupción para un político con cargo {{cargo_actual}}, edad {{user_edad}}, ideología {{user_ideologia}} y perfil {{user_profile}}. El idioma es {{idioma}}. Evita repetir estas categorías previas: {{categorias_previas}}. Cada tipo debe ser una categoría corta y concisa, de 1 a 3 palabras, como una palabra clave o un tag (ej. "Soborno", "Fraude Electoral", "Tráfico Influencias"). Tu respuesta DEBE contener exactamente {{num_tipos}} categorías. Responde en formato JSON con una clave "categorias" que contenga un array de strings.',
+        human_prompt: 'Genera {{num_tipos}} tipos de corrupción para un político con cargo {{cargo_actual}}, edad {{user_edad}}, ideología {{user_ideologia}} y perfil {{user_profile}}. El idioma es {{idioma}}. Evita repetir estas categorías previas: {{categorias_previas}}. Cada tipo debe ser una categoría muy corta y concisa, de UNA o DOS palabras como máximo, preferiblemente UNA. Si son dos palabras, deben estar separadas por un espacio (ej. "Tráfico Influencias", "Abuso Poder"). Tu respuesta DEBE contener exactamente {{num_tipos}} categorías. Responde en formato JSON con una clave "categorias" que contenga un array de strings.',
         model_name: 'llama3-8b-8192',
         temperature: 0.7,
         description: 'Generador de categorías de corrupción para la ruleta.',
-        llm_api_key: '', // Asignar la clave API
+        llm_api_key: process.env.LLM_API_KEY, // Asignar la clave API
       },
       {
         config_name: 'card_generator',
         system_prompt: 'Eres un experto en corrupción política. Tu tarea es generar sub-opciones (cartas) detalladas para un tipo de corrupción específico en un juego de simulación.',
-        human_prompt: 'Genera EXACTAMENTE {{num_cartas}} sub-opciones para el tipo de corrupción "{{tipo_de_corrupcion_elegido}}" para un político con cargo {{cargo_actual}}. El idioma es {{idioma}}. Cada sub-opción debe tener un "titulo", una "descripcion" y 3 "tags_obligatorios". También se le asignará una imagen. Tu respuesta DEBE contener EXACTAMENTE {{num_cartas}} sub-opciones. Responde en formato JSON con una clave "subopciones" que contenga un array de objetos. Ejemplo: {"subopciones": [{"titulo": "...", "descripcion": "...", "tags_obligatorios": ["tag1", "tag2", "tag3"]}]}.',
+        human_prompt: 'Genera EXACTAMENTE {{num_cartas}} sub-opciones para el tipo de corrupción "{{tipo_de_corrupcion_elegido}}" para un político con cargo {{cargo_actual}}. El idioma es {{idioma}}. Cada sub-opción debe tener un "titulo", una "descripcion" y 3 "tags_obligatorios". Los tags deben ser de una o dos palabras como máximo, separadas por un espacio si son dos palabras (ej. "Fraude", "Lavado Dinero"). También se le asignará una imagen. Tu respuesta DEBE contener EXACTAMENTE {{num_cartas}} sub-opciones. Responde en formato JSON con una clave "subopciones" que contenga un array de objetos. Ejemplo: {"subopciones": [{"titulo": "...", "descripcion": "...", "tags_obligatorios": ["tag1", "tag2", "tag3"]}]}.',
         model_name: 'llama3-8b-8192',
         temperature: 0.7,
         description: 'Generador de cartas de corrupción (sub-opciones).',
-        llm_api_key: '', // Asignar la clave API
+        llm_api_key: process.env.LLM_API_KEY, // Asignar la clave API
       },
       {
         config_name: 'plan_evaluator',
@@ -53,7 +53,7 @@ Responde en formato JSON con dos claves: "llm_evaluation_json" y "llm_advice_jso
         model_name: 'llama3-8b-8192',
         temperature: 0.7,
         description: 'Evaluador de planes del jugador.',
-        llm_api_key: '', // Asignar la clave API
+        llm_api_key: process.env.LLM_API_KEY, // Asignar la clave API
       },
       {
         config_name: 'scandal_headline_generator',
@@ -62,7 +62,7 @@ Responde en formato JSON con dos claves: "llm_evaluation_json" y "llm_advice_jso
         model_name: 'llama3-8b-8192',
         temperature: 0.7,
         description: 'Generador de titulares de escándalo.',
-        llm_api_key: '', // Asignar la clave API
+        llm_api_key: process.env.LLM_API_KEY, // Asignar la clave API
       },
       {
         config_name: 'plan_generator_dev',
@@ -80,7 +80,7 @@ El idioma de la respuesta debe ser {{idioma}}. Genera únicamente el texto del p
         model_name: 'llama3-8b-8192',
         temperature: 0.8,
         description: '(DEV-ONLY) Generador de planes de jugador para pruebas automatizadas.',
-        llm_api_key: '', // Asignar la clave API
+        llm_api_key: process.env.LLM_API_KEY, // Asignar la clave API
       },
     ];
 

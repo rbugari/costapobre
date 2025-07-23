@@ -1,29 +1,29 @@
 <template>
   <div class="scandal-overlay">
     <div class="scandal-modal">
-      <h2>¡ESCÁNDALO EN COSTA POBRE!</h2>
+      <h2>{{ $t('scandal_event.title') }}</h2>
       <h3 class="scandal-headline">{{ headline }}</h3>
 
       <div class="scandal-options">
         <div class="option-card">
-          <h4>A) Comprar Silencio y Voluntades</h4>
-          <p>Una generosa donación a los medios y un bono 'de productividad' a los jueces clave pueden hacer que este malentendido desaparezca.</p>
-          <p class="cost">Costo: 10% PC actual, 10% INF actual <span v-if="!userInfo.rescatePago">(+1 euro por única vez)</span></p>
-          <button @click="resolveScandal('A')" class="btn-primary">Elegir Opción A</button>
+          <h4>{{ $t('scandal_event.option_a_title') }}</h4>
+          <p>{{ $t('scandal_event.option_a_description') }}</p>
+          <p class="cost">{{ $t('scandal_event.option_a_cost_prefix') }} <span v-if="!userInfo.rescatePago">{{ $t('scandal_event.option_a_cost_suffix') }}</span></p>
+          <button @click="resolveScandal('A')" class="btn-primary">{{ $t('scandal_event.choose_option_a') }}</button>
         </div>
 
         <div class="option-card">
-          <h4>B) Degradación Estratégica</h4>
-          <p>Es hora de dar un paso al costado... 'por el bien del partido'. Bajar de perfil un tiempo hará que todos se olviden. Volverás más fuerte.</p>
-          <p class="cost">Costo: Baja 2 niveles, 50% INF, 50% BE</p>
-          <button @click="resolveScandal('B')" class="btn-primary">Elegir Opción B</button>
+          <h4>{{ $t('scandal_event.option_b_title') }}</h4>
+          <p>{{ $t('scandal_event.option_b_description') }}</p>
+          <p class="cost">{{ $t('scandal_event.option_b_cost') }}</p>
+          <button @click="resolveScandal('B')" class="btn-primary">{{ $t('scandal_event.choose_option_b') }}</button>
         </div>
 
         <div class="option-card">
-          <h4>C) Negarlo Todo y Afrontar las Consecuencias</h4>
-          <p>Son todas mentiras de la oposición. ¡El pueblo de Costa Pobre sabe que soy inocente!</p>
-          <p class="cost">Costo: 0</p>
-          <button @click="resolveScandal('C')" class="btn-primary btn-danger">Elegir Opción C</button>
+          <h4>{{ $t('scandal_event.option_c_title') }}</h4>
+          <p>{{ $t('scandal_event.option_c_description') }}</p>
+          <p class="cost">{{ $t('scandal_event.option_c_cost') }}</p>
+          <button @click="resolveScandal('C')" class="btn-primary btn-danger">{{ $t('scandal_event.choose_option_c') }}</button>
         </div>
       </div>
 
@@ -33,12 +33,12 @@
           <h3>{{ resultMessage }}</h3>
           <img :src="scandalResultImage" alt="Result Image" class="result-image" /> <!-- Placeholder image -->
           <div v-if="updatedGameStateDetails" class="updated-stats">
-            <p>PC: {{ updatedGameStateDetails.pc }}</p>
-            <p>INF: {{ updatedGameStateDetails.inf }}</p>
-            <p>BE: {{ updatedGameStateDetails.be }}</p>
-            <p>Nivel: {{ updatedGameStateDetails.level }}</p>
+            <p>{{ $t('scandal_event.result_modal_pc') }} {{ updatedGameStateDetails.pc }}</p>
+            <p>{{ $t('scandal_event.result_modal_inf') }} {{ updatedGameStateDetails.inf }}</p>
+            <p>{{ $t('scandal_event.result_modal_be') }} {{ updatedGameStateDetails.be }}</p>
+            <p>{{ $t('scandal_event.result_modal_level') }} {{ updatedGameStateDetails.level }}</p>
           </div>
-          <button @click="continueGame" class="btn-primary">Continuar</button>
+          <button @click="continueGame" class="btn-primary">{{ $t('scandal_event.continue_button') }}</button>
         </div>
       </div>
     </div>
@@ -82,8 +82,8 @@ export default {
           this.showResultModal = true; // Show the custom result modal
         }
       } catch (err) {
-        console.error('Error al resolver el escándalo:', err);
-        alert('Error al procesar la opción de escándalo.');
+        console.error(this.$t('scandal_event.error_resolving_scandal'), err);
+        alert(this.$t('scandal_event.error_processing_scandal_option'));
       }
     },
     continueGame() {
@@ -119,6 +119,8 @@ export default {
   width: 90%;
   color: var(--noir-retro-pure-black); /* Dark text */
   border: 5px solid var(--noir-retro-primary-accent); /* Accent border */
+  max-height: 90vh; /* Limit height to 90% of viewport height */
+  overflow-y: auto; /* Add scroll for overflow */
 }
 
 .scandal-modal h2 {
@@ -221,6 +223,8 @@ export default {
   width: 90%;
   color: var(--noir-retro-pure-black);
   border: 5px solid var(--noir-retro-primary-accent);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .result-modal h3 {
@@ -266,6 +270,18 @@ export default {
   }
   .option-card {
     max-width: 100%;
+  }
+
+  .result-modal {
+    padding: 20px;
+  }
+
+  .result-modal h3 {
+    font-size: 1.5em;
+  }
+
+  .result-image {
+    max-width: 60%;
   }
 }
 </style>

@@ -108,6 +108,5 @@ export default api;
 export const monetizationApi = {
   simulatePremiumPurchase: () => api.post('/monetization/simulate-premium', {}), // Pasar un cuerpo vacío para que el interceptor se active
   simulateScandalRescue: () => api.post('/monetization/simulate-scandal-rescue', {}),
-  simulateSetGuestUser: (userId, isGuest) => api.post('/monetization/simulate-set-guest', { userId, isGuest }),
-  simulateAddAdView: () => api.post('/monetization/simulate-ad-view', {}),
+  rewardAd: () => api.post('/monetization/reward-ad', {}),
 };

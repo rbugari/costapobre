@@ -3,6 +3,7 @@ const UserGameState = require('../models/UserGameState');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { sendVerificationEmail } = require('../services/emailService');
 
 exports.register = async (req, res) => {
   const { nickname, email, password, selected_language, country_of_origin, age, political_ideology, personal_profile } = req.body;
@@ -23,7 +24,7 @@ exports.register = async (req, res) => {
 
     // 2. Generar Código de Verificación
     const email_verification_code = crypto.randomInt(100000, 999999).toString();
-    console.log(`*** CÓDIGO DE VERIFICACIÓN PARA ${email}: ${email_verification_code} ***`);
+    // console.log(`*** CÓDIGO DE VERIFICACIÓN PARA ${email}: ${email_verification_code} ***`);
 
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
@@ -49,7 +50,10 @@ exports.register = async (req, res) => {
 
     await UserGameState.create({ user_id: user.id });
 
-    // 3. Enviar respuesta para solicitar verificación
+    // 3. Enviar correo de verificación
+    await sendVerificationEmail(user.email, email_verification_code);
+
+    // 4. Enviar respuesta para solicitar verificación
     res.status(201).json({ msg: 'Registro exitoso. Por favor, verifica tu email con el código enviado.', email: user.email });
 
   } catch (err) {
@@ -101,6 +105,12 @@ exports.login = async (req, res) => {
     let user = await User.findOne({ where: { nickname } });
     if (!user) {
       return res.status(400).json({ msg: 'Credenciales inválidas' });
+    }
+
+    // Check if the user has already won the game
+    console.log(`User ${user.nickname} has_won status: ${user.has_won}`);
+    if (user.has_won) {
+      return res.status(403).json({ msg: '¡Felicidades! Ya has ganado el juego y no puedes jugar de nuevo.', gameWon: true });
     }
 
     // Comprobar si el email está verificado
@@ -220,7 +230,7 @@ exports.acceptTerms = async (req, res) => {
 exports.updatePremiumStatus = async (req, res) => {
   try {
     // Only allow this in development mode
-    if (process.env.GAME_MODE !== 'desarrollo') {
+    if (process.env.DEBUG !== 'true') {
       return res.status(403).json({ msg: 'This endpoint is only available in development mode.' });
     }
 
@@ -235,6 +245,33 @@ exports.updatePremiumStatus = async (req, res) => {
     await user.save();
 
     res.json({ msg: 'User premium status updated successfully.' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+exports.resendVerificationEmail = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(400).json({ msg: 'Usuario no encontrado.' });
+    }
+
+    if (user.is_email_verified) {
+      return res.status(400).json({ msg: 'El email ya ha sido verificado.' });
+    }
+
+    const new_email_verification_code = crypto.randomInt(100000, 999999).toString();
+    user.email_verification_code = new_email_verification_code;
+    await user.save();
+
+    await sendVerificationEmail(user.email, new_email_verification_code);
+
+    res.json({ msg: 'Código de verificación reenviado correctamente.' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

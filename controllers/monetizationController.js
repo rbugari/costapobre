@@ -25,33 +25,10 @@ exports.simulatePremiumPurchase = async (req, res) => {
 
     user.premium = true;
     // Check if both payments are made
-    const precioPremiumPass = parseFloat(await getConfigValue('PRECIO_PREMIUM_PASS'));
-    const precioRescateEscandalo = parseFloat(await getConfigValue('PRECIO_RESCATE_ESCANDALO'));
-    const precioTotalDesbloqueo = parseFloat(await getConfigValue('PRECIO_TOTAL_DESBLOQUEO'));
-
-    if (user.rescatePago && (precioPremiumPass + precioRescateEscandalo) >= precioTotalDesbloqueo) {
-      user.pagoTotal = true;
-    }
-
+    
     await user.save();
 
-    // Lógica para ascender al usuario si estaba bloqueado por el nivel premium
-    const monetizacionNivelPremium = parseInt(await getConfigValue('MONETIZACION_NIVEL_PREMIUM'));
-    let gameState = await UserGameState.findOne({ where: { user_id: userId } });
-
-    if (gameState && gameState.level < monetizacionNivelPremium) {
-      const targetLevelInfo = await GameLevel.findOne({ where: { level_number: monetizacionNivelPremium } });
-      if (targetLevelInfo) {
-        gameState.level = monetizacionNivelPremium;
-        gameState.pc = targetLevelInfo.pc_required_for_ascension; // Ajustar PC al requisito del nuevo nivel
-        gameState.inf = targetLevelInfo.inf_required_for_ascension; // Ajustar INF al requisito del nuevo nivel
-        gameState.be = 0; // Resetear BE al ascender por pago
-        await gameState.save();
-        console.log(`Usuario ${userId} ascendido automáticamente al nivel ${monetizacionNivelPremium} tras compra premium.`);
-      }
-    }
-
-    res.status(200).json({ message: 'Premium pass simulated successfully.', user, gameState });
+    res.status(200).json({ message: 'Premium pass simulated successfully.', user });
   } catch (error) {
     console.error('Error simulating premium purchase:', error);
     res.status(500).json({ message: 'Internal server error.' });
@@ -73,14 +50,11 @@ exports.simulateScandalRescuePurchase = async (req, res) => {
 
     user.rescatePago = true;
     // Check if both payments are made
-    const precioPremiumPass = parseFloat(await getConfigValue('PRECIO_PREMIUM_PASS'));
     const precioRescateEscandalo = parseFloat(await getConfigValue('PRECIO_RESCATE_ESCANDALO'));
     const precioTotalDesbloqueo = parseFloat(await getConfigValue('PRECIO_TOTAL_DESBLOQUEO'));
 
-    if (user.premium && (precioPremiumPass + precioRescateEscandalo) >= precioTotalDesbloqueo) {
-      user.pagoTotal = true;
+    if (user.premium && precioRescateEscandalo >= precioTotalDesbloqueo) {
     }
-
     await user.save();
     res.status(200).json({ message: 'Scandal rescue simulated successfully.', user });
   } catch (error) {
@@ -89,46 +63,33 @@ exports.simulateScandalRescuePurchase = async (req, res) => {
   }
 };
 
-exports.simulateSetGuestUser = async (req, res) => {
-  try {
-    const { userId, isGuest } = req.body; // Admin panel would send userId
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    user.tipo_invitado = isGuest;
-    await user.save();
-    res.status(200).json({ message: `User ${user.nickname} guest status set to ${isGuest}.`, user });
-  } catch (error) {
-    console.error('Error setting guest user status:', error);
-    res.status(500).json({ message: 'Internal server error.' });
-  }
-};
-
-exports.simulateAddAdView = async (req, res) => {
+exports.rewardAd = async (req, res) => {
   try {
     const userId = req.user.id;
+    let gameState = await UserGameState.findOne({ where: { user_id: userId } });
     const user = await User.findByPk(userId);
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+    if (!gameState || !user) {
+      return res.status(404).json({ message: 'User or game state not found.' });
     }
 
-    const invitadoMaxAnuncios = parseInt(await getConfigValue('INVITADO_MAX_ANUNCIOS'));
+    // Apply reward: +20 PC, -5 BE (example values)
+    gameState.pc += 20;
+    gameState.be = Math.max(0, gameState.be - 5);
 
-    if (user.tipo_invitado && user.anuncios_vistos < invitadoMaxAnuncios) {
-      user.anuncios_vistos += 1;
-      await user.save();
-      return res.status(200).json({ message: 'Ad view recorded.', user });
-    } else if (!user.tipo_invitado) {
-      return res.status(400).json({ message: 'User is not a guest user.' });
-    } else {
-      return res.status(400).json({ message: 'Guest user has reached maximum ad views.' });
-    }
+    await gameState.save();
+
+    res.status(200).json({
+      message: 'Ad rewarded successfully.',
+      updated_game_state: {
+        ...gameState.toJSON(),
+        userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado } : null,
+      },
+    });
   } catch (error) {
-    console.error('Error adding ad view:', error);
+    console.error('Error rewarding ad:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
+
+

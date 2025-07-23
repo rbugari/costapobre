@@ -28,22 +28,39 @@ exports.loadProgress = async (req, res) => {
     let scandalTriggered = false;
     let scandalHeadline = null;
 
+    // Determine the correct description based on user's language
+    let levelDescription = '';
+    if (gameLevel) {
+      const userLanguage = user.selected_language || 'es'; // Default to Spanish
+      levelDescription = userLanguage === 'en' ? gameLevel.description_en : gameLevel.description_es;
+    }
+
+    let levelTitle = '';
+    if (gameLevel) {
+      const userLanguage = user.selected_language || 'es'; // Default to Spanish
+      levelTitle = userLanguage === 'en' ? gameLevel.title_en : gameLevel.title_es;
+    }
+
     // Si la BE es alta al cargar el progreso, disparar el evento de escándalo
     if (gameState.be >= 85) {
       scandalTriggered = true;
-      scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
+      scandalHeadline = await aiService.generateScandalHeadline(levelTitle, user.selected_language || 'es', gameState.be);
     }
 
     const gameConfig = getGameConfig();
 
     res.json({
       ...gameState.toJSON(),
-      levelInfo: gameLevel ? gameLevel.toJSON() : null,
-      userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado, anuncios_vistos: user.anuncios_vistos } : null,
+      levelInfo: gameLevel ? {
+        ...gameLevel.toJSON(),
+        title: levelTitle, // Use the language-specific title
+        description_visual: levelDescription, // Use the language-specific description
+      } : null,
+      userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado, selected_language: user.selected_language } : null,
       maxLevel: maxLevel,
       scandal_triggered: scandalTriggered,
       scandal_headline: scandalHeadline,
-      gameMode: gameConfig.GAME_MODE,
+      debugMode: process.env.DEBUG === 'true',
     });
   } catch (err) {
     console.error(err.message);
@@ -79,7 +96,7 @@ exports.saveProgress = async (req, res) => {
     // Monetization logic for scandal and game over
     const umbralEscandaloMinimo = parseInt(await getConfigValue('UMBRAL_ESCANDALO_MINIMO'));
 
-    if (gameState.be >= umbralEscandaloMinimo && !user.rescatePago && !user.pagoTotal && !user.tipo_invitado) {
+    if (gameState.be >= umbralEscandaloMinimo && !user.rescatePago) {
       return res.status(402).json({ msg: 'Scandal too high. Purchase rescue to continue.', requiresRescue: true });
     } else if (gameState.be < umbralEscandaloMinimo && user.rescatePago) {
       user.rescatePago = false; // Clear rescatePago if scandal is below threshold
@@ -90,9 +107,29 @@ exports.saveProgress = async (req, res) => {
     const updatedGameLevel = await GameLevel.findOne({ where: { level_number: gameState.level } });
     const updatedUser = await User.findByPk(userId); // Obtener los datos del usuario actualizados
 
-    
+    // Check for game win condition (reached PC for level 7)
+    const maxLevel = await GameLevel.max('level_number');
+    console.log(`[GameController] Checking win condition: current level ${gameState.level}, max level ${maxLevel}`);
+    if (gameState.level === maxLevel) {
+      const finalLevelConfig = await GameLevel.findOne({ where: { level_number: maxLevel } });
+      if (finalLevelConfig) {
+        console.log(`[GameController] Final level PC required: ${finalLevelConfig.pc_required_for_ascension}, current PC: ${gameState.pc}`);
+        if (gameState.pc >= finalLevelConfig.pc_required_for_ascension) {
+          gameWon = true;
+          msg = '¡Felicidades! Has alcanzado la cima de la corrupción. ¡Has ganado el juego!';
+          user.has_won = true; // Set has_won to true
+          await user.save(); // Save the user object
 
-    
+          return res.json({
+            ...gameState.toJSON(),
+            levelInfo: updatedGameLevel ? updatedGameLevel.toJSON() : null,
+            userInfo: updatedUser ? { nickname: updatedUser.nickname, avatar_url: updatedUser.avatar_url, premium: updatedUser.premium, tipo_invitado: updatedUser.tipo_invitado, selected_language: updatedUser.selected_language } : null,
+            gameWon: gameWon,
+            msg: msg,
+          });
+        }
+      }
+    }
 
     // Obtener la información del *nuevo* siguiente nivel si hubo ascenso
     const newNextLevelNumber = gameState.level + 1;
@@ -101,10 +138,12 @@ exports.saveProgress = async (req, res) => {
     res.json({
       ...gameState.toJSON(),
       levelInfo: updatedGameLevel ? updatedGameLevel.toJSON() : null,
-      userInfo: updatedUser ? { nickname: updatedUser.nickname, avatar_url: updatedUser.avatar_url, premium: updatedUser.premium, tipo_invitado: updatedUser.tipo_invitado, anuncios_vistos: updatedUser.anuncios_vistos } : null,
+      userInfo: updatedUser ? { nickname: updatedUser.nickname, avatar_url: updatedUser.avatar_url, premium: updatedUser.premium, tipo_invitado: updatedUser.tipo_invitado, selected_language: updatedUser.selected_language } : null,
       nextLevelInfo: newNextLevel ? newNextLevel.toJSON() : null,
-       // Ensure gameWon is always present
+      gameWon: gameWon, // Ensure gameWon is always present
       msg: msg || null, // Ensure msg is always present
+      // Add gameWon to the response for the frontend to handle
+      gameWon: gameWon,
     });
   } catch (err) {
     console.error(err.message);
@@ -145,7 +184,7 @@ exports.reduceScandal = async (req, res) => {
     res.json({
       ...gameState.toJSON(),
       levelInfo: gameLevel ? gameLevel.toJSON() : null,
-      userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado, anuncios_vistos: user.anuncios_vistos } : null,
+      userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, premium: user.premium, tipo_invitado: user.tipo_invitado, selected_language: user.selected_language } : null,
       nextLevelInfo: nextLevel ? nextLevel.toJSON() : null,
       be_reduced_this_turn: beReduction,
     });
@@ -266,7 +305,7 @@ exports.resolveScandal = async (req, res) => {
     const finalGameState = {
       ...gameState.toJSON(),
       levelInfo: updatedGameLevel ? updatedGameLevel.toJSON() : null,
-      userInfo: updatedUser ? { nickname: updatedUser.nickname, avatar_url: updatedUser.avatar_url, premium: updatedUser.premium, tipo_invitado: updatedUser.tipo_invitado, anuncios_vistos: updatedUser.anuncios_vistos } : null,
+      userInfo: updatedUser ? { nickname: updatedUser.nickname, avatar_url: updatedUser.avatar_url, premium: updatedUser.premium, tipo_invitado: updatedUser.tipo_invitado, selected_language: updatedUser.selected_language } : null,
     };
 
     if (gameOver) {
@@ -281,6 +320,25 @@ exports.resolveScandal = async (req, res) => {
 
   } catch (err) {
     console.error('Error resolving scandal:', err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+exports.goPremium = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    user.premium = true;
+    await user.save();
+
+    res.json({ msg: 'User is now premium', premium: true });
+  } catch (err) {
+    console.error(err.message);
     res.status(500).send('Server error');
   }
 };

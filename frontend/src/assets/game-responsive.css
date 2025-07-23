@@ -1,0 +1,30 @@
+/* Responsive adjustments for game-info-panel */
+@media (max-width: 768px) {
+  .game-info-panel {
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .character-info-container,
+  .resources-container {
+    width: 100%;
+  }
+
+  .character-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .character-title {
+    font-size: 1.5em;
+  }
+
+  .character-description {
+    font-size: 0.9em;
+  }
+
+  .resource-label {
+    font-size: 0.8em;
+  }
+}

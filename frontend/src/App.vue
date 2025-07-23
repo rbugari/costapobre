@@ -1,10 +1,6 @@
 <template>
   <div id="app">
-    <div class="theme-switcher">
-      <button @click="setTheme('ocre')">Ocre Theme</button>
-      <button @click="setTheme('dark')">Dark Theme (Placeholder)</button>
-      <button @click="setTheme('noir-retro')">Noir Retro Theme</button>
-    </div>
+    
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
         <component :is="Component" />
@@ -52,21 +48,7 @@ export default {
 @import './assets/dark-theme.css';
 @import './assets/noir-retro-theme.css';
 
-.theme-switcher {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 5px;
-  border-radius: 5px;
-}
 
-.theme-switcher button {
-  margin-left: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-}
 
 /* Keep only transition styles, other global styles will be in base.css */
 .fade-enter-active,

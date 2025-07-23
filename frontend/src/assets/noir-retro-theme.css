@@ -40,19 +40,19 @@ html.theme-noir-retro {
   border-radius: 8px; /* Soft rounded borders */
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 3px 3px 0px var(--noir-retro-pure-black);
+  box-shadow: 3px 3px 0px #084244;
 }
 
 .theme-noir-retro .btn-primary:hover,
 .theme-noir-retro .btn-primary:focus {
   background-color: #A03A25; /* Slightly darker red */
   transform: translate(1px, 1px); /* Simulates button press */
-  box-shadow: 1px 1px 0px var(--noir-retro-pure-black);
+  box-shadow: 1px 1px 0px #084244;
 }
 
 .theme-noir-retro .btn-primary:active {
   transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px var(--noir-retro-pure-black);
+  box-shadow: 0px 0px 0px #084244;
 }
 
 .theme-noir-retro .btn-secondary {
@@ -66,19 +66,19 @@ html.theme-noir-retro {
   border-radius: 8px; /* Soft rounded borders */
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 3px 3px 0px var(--noir-retro-pure-black);
+  box-shadow: 3px 3px 0px #084244;
 }
 
 html.theme-noir-retro .btn-secondary:hover,
 html.theme-noir-retro .btn-secondary:focus {
   background-color: #226A6D; /* Slightly darker teal */
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px var(--noir-retro-pure-black);
+  box-shadow: 1px 1px 0px #084244;
 }
 
 html.theme-noir-retro .btn-secondary:active {
   transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px var(--noir-retro-pure-black);
+  box-shadow: 0px 0px 0px #084244;
 }
 
 /* General Link Styling to look like buttons (OVERRIDE) */

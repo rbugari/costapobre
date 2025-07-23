@@ -23,4 +23,9 @@ router.post('/evaluate-plan', authMiddleware, aiController.evaluatePlan);
 // @access  Private
 router.post('/generate-dev-plan', authMiddleware, aiController.generateDevPlan);
 
+// @route   POST api/ai/generate-wildcard-plan
+// @desc    Generate a wildcard plan for the player after watching an ad
+// @access  Private
+router.post('/generate-wildcard-plan', authMiddleware, aiController.generateWildcardPlan);
+
 module.exports = router;

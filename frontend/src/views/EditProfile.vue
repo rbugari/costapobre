@@ -1,24 +1,24 @@
 <template>
   <div class="auth-container">
     <div class="auth-form">
-      <h2>Editar Perfil</h2>
+      <h2>{{ $t('edit_profile.edit_profile_title') }}</h2>
       <form @submit.prevent="saveProfile">
-        <input type="text" :value="userProfile.nickname" placeholder="Nickname" disabled />
-        <input type="email" :value="userProfile.email" placeholder="Email" disabled />
+        <input type="text" :value="userProfile.nickname" :placeholder="$t('edit_profile.nickname_placeholder')" disabled />
+        <input type="email" :value="userProfile.email" :placeholder="$t('edit_profile.email_placeholder')" disabled />
         
         <select v-model="userProfile.country_of_origin">
-          <option value="">Seleccionar País</option>
+          <option value="">{{ $t('edit_profile.select_country_placeholder') }}</option>
           <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
         </select>
 
-        <input type="number" v-model="userProfile.age" placeholder="Edad" />
-        <input type="text" v-model="userProfile.political_ideology" placeholder="Ideología Política" />
-        <textarea v-model="userProfile.personal_profile" placeholder="Perfil Personal"></textarea>
+        <input type="number" v-model="userProfile.age" :placeholder="$t('edit_profile.age_placeholder')" />
+        <input type="text" v-model="userProfile.political_ideology" :placeholder="$t('edit_profile.political_ideology_placeholder')" />
+        <textarea v-model="userProfile.personal_profile" :placeholder="$t('edit_profile.personal_profile_placeholder')"></textarea>
         
         <div class="form-group">
-          <label for="avatar-upload">Foto de Avatar:</label>
+          <label for="avatar-upload">{{ $t('edit_profile.avatar_label') }}</label>
           <input type="file" id="avatar-upload" @change="onFileSelected" accept="image/*" />
-          <p class="help-text">Formatos permitidos: JPG, PNG, GIF, WEBP. Tamaño máximo: 2MB.</p>
+          <p class="help-text">{{ $t('edit_profile.avatar_help_text') }}</p>
           <div v-if="avatarPreview" class="avatar-preview-container">
             <img :src="avatarPreview" alt="Avatar Preview" class="avatar-preview" />
           </div>
@@ -28,9 +28,9 @@
           <option value="en">English</option>
           <option value="es">Español</option>
         </select>
-        <button type="submit" class="btn-primary">Guardar Cambios</button>
+        <button type="submit" class="btn-primary">{{ $t('edit_profile.save_changes_button') }}</button>
       </form>
-      <button @click="goBackToGame" class="btn-secondary" style="margin-top: 1rem;">Volver al Juego</button>
+      <button @click="goBackToGame" class="btn-secondary" style="margin-top: 1rem;">{{ $t('edit_profile.back_to_game_button') }}</button>
     </div>
   </div>
 </template>
@@ -56,6 +56,13 @@ export default {
   async mounted() {
     await this.fetchUserProfile();
   },
+  watch: {
+    'userProfile.selected_language'(newLang) {
+      if (newLang) {
+        this.$i18n.locale = newLang;
+      }
+    },
+  },
   methods: {
     async fetchUserProfile() {
       try {
@@ -63,6 +70,11 @@ export default {
         this.userProfile = res.data;
         if (this.userProfile.avatar_url) {
           this.avatarPreview = `http://localhost:5000${this.userProfile.avatar_url}`;
+        }
+        // Set the i18n locale based on the fetched user profile language
+        if (this.userProfile.selected_language) {
+          this.$i18n.locale = this.userProfile.selected_language;
+          localStorage.setItem('selectedLanguage', this.userProfile.selected_language);
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -80,11 +92,13 @@ export default {
         }
 
         await api.put('/auth/profile', this.userProfile);
-        alert('Perfil actualizado exitosamente!');
+        // Save the selected language to localStorage after successful profile update
+        localStorage.setItem('selectedLanguage', this.userProfile.selected_language);
+        alert(this.$t('edit_profile.profile_updated_successfully'));
         this.$router.push('/game');
       } catch (err) {
         console.error('Error saving user profile:', err);
-        alert('Error al guardar el perfil.');
+        alert(this.$t('edit_profile.error_saving_profile'));
       }
     },
     onFileSelected(event) {

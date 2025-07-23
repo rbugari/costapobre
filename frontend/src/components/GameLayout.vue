@@ -1,7 +1,7 @@
 <template>
   <div class="game-board-container">
     <header class="game-board-header">
-      <img :src="headerImage" alt="Corruptopolis IA" class="header-image-bg" />
+      <img :src="headerImage" :alt="$t('game_layout.game_title_alt')" class="header-image-bg" />
     </header>
     <main class="game-board-main">
       <router-view />
@@ -13,17 +13,18 @@
             <img
               v-if="userProfile.avatar_url"
               :src="getCharacterImageUrl(userProfile.avatar_url)"
-              alt="User Avatar"
+              :alt="$t('game_layout.user_avatar_alt')"
               class="user-avatar-footer"
             />
             <span class="user-nickname-footer">{{ userProfile.nickname }}</span>
+            <button @click="goToEditProfile" class="btn-footer">{{ $t('game_layout.edit_profile_button') }}</button>
           </div>
         </div>
         <div class="footer-right-section">
-          <button @click="goToHistory" class="btn-secondary">Historial</button>
-          <button @click="goToHelp" class="btn-secondary">Ayuda</button>
-          <button @click="goToEditProfile" class="btn-secondary">Editar Perfil</button>
-          <button @click="logout" class="btn-secondary">Salir</button>
+          <button v-if="showRewardAdButton" @click="showRewardAd" class="btn-footer">{{ $t('game_layout.view_ad_button') }}</button>
+          <button @click="goToHistory" class="btn-footer">{{ $t('game_layout.history_button') }}</button>
+          <button @click="goToHelp" class="btn-footer">{{ $t('game_layout.help_button') }}</button>
+          <button @click="logout" class="btn-footer">{{ $t('game_layout.logout_button') }}</button>
         </div>
       </div>
     </footer>
@@ -34,13 +35,30 @@
 import api from '../api';
 import headerImage from '../assets/header1.png';
 
+import eventBus from '../eventBus';
+
 export default {
   name: 'GameLayout',
   data() {
     return {
       userProfile: null,
       headerImage: headerImage,
+      showRewardAdButton: false,
     };
+  },
+  watch: {
+    'userProfile.selected_language'(newLang) {
+      if (newLang && this.$i18n.locale !== newLang) {
+        this.$i18n.locale = newLang;
+        localStorage.setItem('selectedLanguage', newLang);
+      }
+    },
+  },
+  created() {
+    eventBus.on('update-gamestate', this.handleGameStateUpdate);
+  },
+  beforeUnmount() {
+    eventBus.off('update-gamestate', this.handleGameStateUpdate);
   },
   async mounted() {
     await this.fetchUserProfile();
@@ -50,6 +68,11 @@ export default {
       try {
         const res = await api.get('/auth/profile');
         this.userProfile = res.data;
+        // Set initial locale from fetched user profile
+        if (this.userProfile.selected_language) {
+          this.$i18n.locale = this.userProfile.selected_language;
+          localStorage.setItem('selectedLanguage', this.userProfile.selected_language);
+        }
       } catch (err) {
         console.error('Error fetching user profile in GameLayout:', err);
         // Manejar el error, quizás redirigir al login si el token es inválido
@@ -68,10 +91,28 @@ export default {
     },
     logout() {
       localStorage.removeItem('accessToken'); // Corregido de 'token' a 'accessToken'
+      localStorage.removeItem('selectedLanguage'); // Clear language on logout
       this.$router.push('/login'); // Redirigir explícitamente a /login
     },
     goToEditProfile() {
       this.$router.push({ name: 'EditProfile' });
+    },
+    handleGameStateUpdate(gameState) {
+      if (gameState && gameState.userInfo) {
+        this.showRewardAdButton = !gameState.userInfo.premium;
+        // Update userProfile with selected_language from gameState
+        this.userProfile = { ...this.userProfile, ...gameState.userInfo };
+      }
+    },
+    async showRewardAd() {
+      try {
+        const response = await api.rewardAd();
+        eventBus.emit('gamestate-updated-by-ad', response.data.updated_game_state);
+        alert('¡Recompensa obtenida! Has ganado 20 PC y tu BE se ha reducido en 5.');
+      } catch (error) {
+        console.error('Error getting ad reward:', error);
+        alert('No se pudo obtener la recompensa del anuncio. Inténtalo de nuevo.');
+      }
     },
   },
 };
@@ -192,6 +233,33 @@ export default {
   /* Removed specific button styles, now uses btn-secondary */
 }
 
+.btn-footer {
+  background-color: var(--noir-retro-secondary-accent);
+  color: var(--noir-retro-off-white);
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  padding: 5px 10px; /* Compact padding */
+  border: 2px solid var(--noir-retro-pure-black);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 3px 3px 0px var(--noir-retro-pure-black);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-footer:hover:not(:disabled) {
+  background-color: #226A6D;
+  box-shadow: 1px 1px 0px var(--noir-retro-pure-black);
+}
+
+.btn-footer:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--noir-retro-pure-black);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .game-board-container {
@@ -207,6 +275,16 @@ export default {
   }
   .header-right {
     text-align: center;
+  }
+
+  .footer-buttons {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .footer-right-section {
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    justify-content: center; /* Center buttons when wrapped */
   }
 }
 </style>

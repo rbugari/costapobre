@@ -1,28 +1,42 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config({ path: __dirname + '/../.env' });
 
-console.log('DB_NAME:', process.env.DB_NAME);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
-console.log('DB_HOST:', process.env.DB_HOST);
+const env = process.env.NODE_ENV || 'development';
+
+const dbConfig = {
+  development: {
+    database: process.env.DB_NAME_DEV,
+    username: process.env.DB_USER_DEV,
+    password: process.env.DB_PASSWORD_DEV,
+    host: process.env.DB_HOST_DEV,
+    dialect: 'mysql',
+    logging: false,
+  },
+  production: {
+    database: process.env.DB_NAME_PROD,
+    username: process.env.DB_USER_PROD,
+    password: process.env.DB_PASSWORD_PROD,
+    host: process.env.DB_HOST_PROD,
+    dialect: 'mysql',
+    logging: false,
+  },
+};
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  dbConfig[env].database,
+  dbConfig[env].username,
+  dbConfig[env].password,
   {
-    host: process.env.DB_HOST,
-    dialect: 'mysql',
-    logging: false, // Disable logging SQL queries to console
+    host: dbConfig[env].host,
+    dialect: dbConfig[env].dialect,
+    logging: dbConfig[env].logging,
   }
 );
 
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('MySQL Connected...');
-    // Synchronize all models with the database
-     
+    console.log(`MySQL Connected to ${env} database...`);
     console.log('All models synchronized with database.');
   } catch (error) {
     console.error('Unable to connect to the database or synchronize models:', error);

@@ -63,19 +63,15 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  pagoTotal: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
   tipo_invitado: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  anuncios_vistos: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
   terms_accepted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  has_won: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },

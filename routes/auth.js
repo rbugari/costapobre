@@ -8,6 +8,7 @@ router.post('/register', registerUpload.single('avatar'), authController.registe
 router.post('/verify-email', authController.verifyEmail);
 router.post('/login', authController.login);
 router.post('/refresh-token', authController.refreshToken);
+router.post('/resend-verification-email', authController.resendVerificationEmail);
 
 // @route   GET api/auth/profile
 // @desc    Get user profile

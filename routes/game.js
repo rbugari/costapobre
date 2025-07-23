@@ -24,4 +24,9 @@ router.get('/config', gameController.getGameConfig);
 // @access  Private
 router.post('/resolve-scandal', auth, gameController.resolveScandal);
 
+// @route   POST api/game/go-premium
+// @desc    Update user to premium status
+// @access  Private
+router.post('/go-premium', auth, gameController.goPremium);
+
 module.exports = router;

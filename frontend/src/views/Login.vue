@@ -1,31 +1,33 @@
 <template>
   <div class="auth-container">
     <div class="auth-form">
-      <h2>Iniciar Sesión</h2>
+      <img :src="headerImage" alt="Corruptopolis IA" class="form-header-image" />
       <form @submit.prevent="login">
         <div class="form-group">
-          <input type="text" v-model="nickname" placeholder="Nickname" required />
+          <input type="text" v-model="nickname" :placeholder="$t('login.nickname_placeholder')" required />
         </div>
         <div class="form-group">
-          <input type="password" v-model="password" placeholder="Contraseña" required />
+          <input type="password" v-model="password" :placeholder="$t('login.password_placeholder')" required />
         </div>
-        <button type="submit" class="btn-primary">Login</button>
+        <button type="submit" class="btn-primary">{{ $t('login.login_button') }}</button>
       </form>
-      <p class="auth-switch">
-        ¿No tienes una cuenta? <router-link to="/register">Regístrate</router-link>
-      </p>
+      <div class="auth-switch">
+        <p><strong>{{ $t('login.no_account_question') }}</strong> <router-link to="/register" class="btn-secondary">{{ $t('login.register_button') }}</router-link></p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import api from '../api';
+import headerImage from '../assets/header1.png';
 
 export default {
   data() {
     return {
       nickname: '',
-      password: ''
+      password: '',
+      headerImage: headerImage,
     };
   },
   methods: {
@@ -76,6 +78,13 @@ export default {
   font-family: 'Bebas Neue', sans-serif; /* Updated for consistent title font */
   color: var(--color-text-dark); /* Changed to new palette variable */
   margin-bottom: 1.5rem;
+}
+
+.form-header-image {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
 }
 
 .form-group {

@@ -14,20 +14,23 @@ const getConfigValue = async (key) => {
 
 exports.getCorruptionTypes = async (req, res) => {
   console.log('Backend: Solicitud recibida para getCorruptionTypes.');
-  const { cargo_actual, idioma } = req.body;
+  const { idioma } = req.body;
   const userId = req.user.id;
   try {
     const user = await User.findByPk(userId);
     const gameState = await UserGameState.findOne({ where: { user_id: userId } });
     const playerLevel = gameState ? gameState.level : 1; // Default to 1 if no game state
     const num_tipos = parseInt(await getConfigValue('NUM_CORRUPTION_TYPES')) || 10; // Get from game_config, default to 10
+    const gameLevel = await GameLevel.findOne({ where: { level_number: playerLevel } });
+    const userLanguage = user.selected_language || 'es';
+    const cargo_actual_multilingual = userLanguage === 'en' ? gameLevel.title_en : gameLevel.title_es;
 
     const types = await aiService.getCorruptionTypes(
       userId,
-      cargo_actual,
-      user.age,
-      user.political_ideology,
-      user.personal_profile,
+      cargo_actual_multilingual,
+      user.age || null,
+      user.political_ideology || null,
+      user.personal_profile || null,
       idioma,
       num_tipos,
       playerLevel
@@ -40,16 +43,19 @@ exports.getCorruptionTypes = async (req, res) => {
 };
 
 exports.getCards = async (req, res) => {
-  const { cargo_actual, tipo_de_corrupcion_elegido, idioma } = req.body;
+  const { tipo_de_corrupcion_elegido, idioma } = req.body;
   const userId = req.user.id;
   try {
     const user = await User.findByPk(userId);
     const gameState = await UserGameState.findOne({ where: { user_id: userId } });
     const playerLevel = gameState ? gameState.level : 1; // Default to 1 if no game state
+    const gameLevel = await GameLevel.findOne({ where: { level_number: playerLevel } });
+    const userLanguage = user.selected_language || 'es';
+    const cargo_actual_multilingual = userLanguage === 'en' ? gameLevel.title_en : gameLevel.title_es;
 
     const cards = await aiService.getCards(
       userId,
-      cargo_actual,
+      cargo_actual_multilingual,
       tipo_de_corrupcion_elegido,
       idioma,
       playerLevel
@@ -62,7 +68,7 @@ exports.getCards = async (req, res) => {
 };
 
 exports.evaluatePlan = async (req, res) => {
-  const { cargo_actual, titulo_accion_elegida, tags_accion_elegida, plan_del_jugador, idioma } = req.body;
+  const { titulo_accion_elegida, tags_accion_elegida, plan_del_jugador, idioma } = req.body;
   const userId = req.user.id; // Obtener el ID del usuario autenticado
 
   try {
@@ -78,13 +84,15 @@ exports.evaluatePlan = async (req, res) => {
     }
 
     const user = await User.findByPk(userId); // Obtener los datos del usuario para pasar al LLM
+    const userLanguage = user.selected_language || 'es';
+    const cargo_actual_multilingual = userLanguage === 'en' ? gameLevel.title_en : gameLevel.title_es;
 
     const tagsArray = Array.isArray(tags_accion_elegida) ? tags_accion_elegida : [tags_accion_elegida];
 
     // 2. Obtener la evaluación del LLM
     const evaluationResult = await aiService.evaluatePlan(
       userId, 
-      cargo_actual, 
+      cargo_actual_multilingual, 
       titulo_accion_elegida, 
       tagsArray, 
       plan_del_jugador, 
@@ -97,16 +105,16 @@ exports.evaluatePlan = async (req, res) => {
     const llmEvaluation = evaluationResult.llm_evaluation_json;
     const llmAdvice = evaluationResult.llm_advice_json;
 
-    console.log('aiController: llmEvaluation.pc_ganancia.valor =', llmEvaluation.pc_ganancia.valor);
+    console.log('aiController: llmEvaluation.pc_gain.value =', llmEvaluation.pc_gain.value);
     console.log('aiController: gameLevel.pc_gain_factor =', gameLevel.pc_gain_factor);
-    console.log('aiController: llmEvaluation.be_aumento.valor =', llmEvaluation.be_aumento.valor);
-    console.log('aiController: llmEvaluation.inf_ganancia.valor =', llmEvaluation.inf_ganancia.valor);
+    console.log('aiController: llmEvaluation.be_increase.value =', llmEvaluation.be_increase.value);
+    console.log('aiController: llmEvaluation.inf_gain.value =', llmEvaluation.inf_gain.value);
     console.log('aiController: gameLevel.inf_gain_factor =', gameLevel.inf_gain_factor);
 
     // 3. Aplicar fórmulas de ganancia de recursos
-    const pcGanado = Math.round(llmEvaluation.pc_ganancia.valor * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100)));
-    const aumentoBE = llmEvaluation.be_aumento.valor / 2;
-    const infGanado = Math.round(llmEvaluation.inf_ganancia.valor * gameLevel.inf_gain_factor);
+    const pcGanado = Math.round(llmEvaluation.pc_gain.value * gameLevel.pc_gain_factor * (1 + (gameState.inf / 100)));
+    const aumentoBE = llmEvaluation.be_increase.value / 2;
+    const infGanado = Math.round(llmEvaluation.inf_gain.value);
 
     console.log('aiController: Calculated infGanado =', infGanado);
     console.log('aiController: Calculated aumentoBE =', aumentoBE);
@@ -131,19 +139,7 @@ exports.evaluatePlan = async (req, res) => {
 
       if (nextLevel) {
         const monetizacionNivelPremium = parseInt(await getConfigValue('MONETIZACION_NIVEL_PREMIUM'));
-        if (nextLevel.level_number >= monetizacionNivelPremium && !user.premium && !user.tipo_invitado) {
-          // Si el usuario no es premium/invitado y el siguiente nivel requiere premium, denegar el ascenso
-          return res.json({
-            requiresPremiumAccess: true,
-            msg: 'Premium pass required to access this level.',
-            // Incluir el estado actual del juego para que el frontend pueda mostrarlo
-            updated_game_state: {
-              ...gameState.toJSON(),
-              levelInfo: currentLevel ? currentLevel.toJSON() : null,
-              userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url } : null,
-            },
-          });
-        }
+        
         gameState.level = nextLevelNumber;
         ascended = true;
         console.log(`¡Jugador ${userId} ha ascendido al nivel ${nextLevelNumber}!`);
@@ -158,7 +154,7 @@ exports.evaluatePlan = async (req, res) => {
     if (gameState.be >= 85) {
       try {
         scandalTriggered = true;
-        scandalHeadline = await aiService.generateScandalHeadline(gameLevel.title, user.selected_language || 'es', gameState.be);
+        scandalHeadline = await aiService.generateScandalHeadline(cargo_actual_multilingual, user.selected_language || 'es', gameState.be);
         console.log(`¡Jugador ${userId} ha disparado un escándalo! BE: ${gameState.be}, Titular: ${scandalHeadline}`);
       } catch (scandalError) {
         console.error('Error generating scandal headline:', scandalError.message);
@@ -200,7 +196,7 @@ exports.evaluatePlan = async (req, res) => {
     const newNextLevel = await GameLevel.findOne({ where: { level_number: newNextLevelNumber } });
 
     // Calculate dev calculation details
-    const llm_pc_valor = llmEvaluation.pc_ganancia.valor;
+    const llm_pc_valor = llmEvaluation.pc_gain.value;
     const pc_gain_factor = gameLevel.pc_gain_factor;
     const inf_actual = gameState.inf;
     const influence_multiplier = (1 + (inf_actual / 100));
@@ -222,7 +218,7 @@ exports.evaluatePlan = async (req, res) => {
       updated_game_state: {
         ...gameState.toJSON(),
         levelInfo: updatedGameLevel ? updatedGameLevel.toJSON() : null,
-        userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url } : null,
+        userInfo: user ? { nickname: user.nickname, avatar_url: user.avatar_url, selected_language: user.selected_language } : null,
         nextLevelInfo: newNextLevel ? newNextLevel.toJSON() : null,
       },
       ascended: ascended,
@@ -241,9 +237,7 @@ exports.evaluatePlan = async (req, res) => {
 };
 
 exports.generateDevPlan = async (req, res) => {
-  const { getGameConfig } = require('../config/gameConfig');
-  const config = getGameConfig();
-  if (config.GAME_MODE !== 'desarrollo') {
+  if (process.env.DEBUG !== 'true') {
     return res.status(403).send('This feature is only available in development mode.');
   }
 
@@ -255,6 +249,24 @@ exports.generateDevPlan = async (req, res) => {
       descripcion_accion_elegida,
       tags_accion_elegida,
       quality_level,
+      idioma
+    );
+    res.json({ plan });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+exports.generateWildcardPlan = async (req, res) => {
+  const { titulo_accion_elegida, descripcion_accion_elegida, tags_accion_elegida, idioma } = req.body;
+
+  try {
+    const plan = await aiService.generateDevPlan(
+      titulo_accion_elegida,
+      descripcion_accion_elegida,
+      tags_accion_elegida,
+      'bueno', // Always generate a 'good' quality plan
       idioma
     );
     res.json({ plan });
